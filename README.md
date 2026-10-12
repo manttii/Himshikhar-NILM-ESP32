@@ -62,22 +62,22 @@ $$I_{RMS} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} i_{inst}^2[n]} \times \left(\frac{3
 
 Where:
 - $3.3 / 4095 \approx 0.00080586\text{ V/count}$ converts 12-bit ADC integers into physical pin voltages.
-- $\text{VOLTAGE\_CAL}$ and $\text{CURRENT\_CAL}$ are the physical sensor scaling gains.
+- `VOLTAGE_CAL` and `CURRENT_CAL` are the physical sensor scaling gains ($\text{VOLTAGE\_CAL}$, $\text{CURRENT\_CAL}$).
 
 ---
 
 ### 2.3 Mathematical Derivation of Calibration Factors
 
-#### A. Voltage Calibration ($\text{VOLTAGE\_CAL} = 883.58$)
-1. Nominal grid voltage: $V_{RMS} = 230.0\text{ V}$ (peak value $V_{pk} = 230 \times \sqrt{2} \approx 325.27\text{ V}$).
+#### A. Voltage Calibration (`VOLTAGE_CAL` = 883.58)
+1. Nominal grid voltage: $V_{\text{RMS}} = 230.0\text{ V}$ (peak value $V_{pk} = 230 \times \sqrt{2} \approx 325.27\text{ V}$).
 2. The ZMPT101B active module steps down the $230\text{V}$ AC signal through a micro transformer ($2\text{mA}:2\text{mA}$) and conditions it via an LM358 inverting amplifier.
 3. The feedback trimpot is adjusted to yield an AC voltage swing of $0.26028\text{ V RMS}$ ($0.736\text{ V peak-to-peak}$) around the $1.65\text{V}$ midpoint:
-   $$V_{\text{pin\_RMS}} = 0.26028\text{ V}$$
+   $$V_{\text{pin, RMS}} = 0.26028\text{ V}$$
 4. Setting up the transfer relationship:
-   $$V_{RMS} = V_{\text{pin\_RMS}} \times \text{VOLTAGE\_CAL} \implies 230.0 = 0.26028 \times \text{VOLTAGE\_CAL}$$
+   $$V_{\text{RMS}} = V_{\text{pin, RMS}} \times \text{VOLTAGE\_CAL} \implies 230.0 = 0.26028 \times \text{VOLTAGE\_CAL}$$
    $$\text{VOLTAGE\_CAL} = \frac{230.0}{0.26028} = \mathbf{883.58}$$
 
-#### B. Current Calibration ($\text{CURRENT\_CAL} = 100.0$)
+#### B. Current Calibration (`CURRENT_CAL` = 100.0)
 1. The SCT-013-000 current transformer features a turns ratio of $N_p : N_s = 1 : 2000$.
 2. At rated $100\text{A RMS}$ primary current, the secondary winding produces:
    $$I_s = \frac{100\text{A}}{2000} = 50\text{ mA RMS}$$
@@ -85,7 +85,7 @@ Where:
    $$\text{Sensitivity} = \frac{100.0\text{ A}}{1.0\text{ V}} = \mathbf{100.0\text{ A/V}}$$
    *(This corresponds to an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or $33\,\Omega$ with appropriate software scaling).*
 4. Substituting into the firmware formulation:
-   $$I_{RMS} = V_{\text{pin\_RMS}} \times \text{CURRENT\_CAL} \implies \text{CURRENT\_CAL} = 100.0$$
+   $$I_{\text{RMS}} = V_{\text{pin, RMS}} \times \text{CURRENT\_CAL} \implies \text{CURRENT\_CAL} = 100.0$$
 
 ---
 

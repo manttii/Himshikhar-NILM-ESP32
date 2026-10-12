@@ -90,9 +90,9 @@ The SCT-013 is a current transformer producing an alternating secondary current 
        $$V_{pk} = 0.0212\text{A} \times 33\,\Omega \approx 0.70\text{V} \implies V_{pk-pk} = 1.40\text{V}_{pk-pk}$$
        Centered at $1.65\text{V}$, the waveform oscillates between $0.95\text{V}$ and $2.35\text{V}$, safely inside the ESP32 ADC linear dynamic range ($0.4\text{V} - 2.8\text{V}$).
      - The maximum unclipped dynamic range with $R_b = 33\,\Omega$ occurs when $V_{pk} = 1.65\text{V}$ ($V_{pk-pk} = 3.30\text{V}$), corresponding to $I_{s,pk} = \frac{1.65\text{V}}{33\,\Omega} = 50\text{ mA peak} \implies I_{pri,pk} = 100\text{A peak}$ ($70.71\text{A RMS}$).
-   - **Current Calibration Factor ($\text{CURRENT\_CAL} = 100.0$):**
-     - In firmware, $I_{RMS} = V_{pin\_RMS} \times \text{CURRENT\_CAL}$.
-     - A sensitivity of $\text{CURRENT\_CAL} = 100.0\text{ A/V}$ corresponds to a normalized transfer function of $1.0\text{V RMS} \iff 100\text{A RMS}$, which is achieved with an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or with $33\,\Omega$ when digitally scaled for standard CT burdens.
+   - **Current Calibration Factor (`CURRENT_CAL` = 100.0):**
+     - In firmware, $I_{\text{RMS}} = V_{\text{pin,RMS}} \times \text{CURRENT\_CAL}$ (or in code: `I_RMS = V_pin_RMS * CURRENT_CAL`).
+     - A sensitivity of `CURRENT_CAL` = 100.0 A/V corresponds to a normalized transfer function of $1.0\text{ V RMS} \iff 100\text{ A RMS}$, which is achieved with an effective burden of $R_b = \frac{1.0\text{ V}}{0.050\text{ A}} = 20.0\,\Omega$, or with $33\,\Omega$ when digitally scaled for standard CT burdens.
 
 ---
 

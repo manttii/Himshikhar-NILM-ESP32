@@ -79,8 +79,8 @@ Current measurement is achieved through a split-core ferrite **SCT-013-000** cur
 - **Burden Resistor Selection ($R_b$):** The secondary current must be converted into an AC voltage signal compatible with the ESP32's 12-bit ADC ($0\text{V}$ to $3.3\text{V}$). For a typical household measurement envelope up to $30\text{A RMS}$ ($42.4\text{A peak}$, secondary peak current $I_{s,pk} = 21.2\text{ mA}$):
   $$V_{pk} = 0.0212\text{A} \times 33\,\Omega \approx 0.70\text{V} \implies V_{burden,pk-pk} = 1.40\text{V}_{pk-pk}$$
   Centered at $1.65\text{V}$, the waveform oscillates between $0.95\text{V}$ and $2.35\text{V}$, safely inside the linear dynamic range of the ESP32 ADC ($0.4\text{V} - 2.8\text{V}$).
-- **Transfer Sensitivity & Calibration Constant ($\text{CURRENT\_CAL} = 100.0$):**
-  In discrete firmware calculations, line current is evaluated as $I_{RMS} = V_{pin\_RMS} \times \text{CURRENT\_CAL}$. The factor $\text{CURRENT\_CAL} = 100.0\text{ A/V}$ corresponds to a normalized sensitivity of $1.0\text{V RMS} \iff 100\text{A RMS}$, which is established with an effective burden resistance of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or through software scaling for $33\,\Omega$ burdens.
+- **Transfer Sensitivity & Calibration Constant (`CURRENT_CAL` = 100.0):**
+  In discrete firmware calculations, line current is evaluated as $I_{\text{RMS}} = V_{\text{pin, RMS}} \times \text{CURRENT\_CAL}$ (in code: `I_RMS = V_pin_RMS * CURRENT_CAL`). The factor `CURRENT_CAL` = 100.0 A/V corresponds to a normalized sensitivity of $1.0\text{V RMS} \iff 100\text{A RMS}$, which is established with an effective burden resistance of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or through software scaling for $33\,\Omega$ burdens.
 
 ### 2.3 The Midpoint DC Virtual Ground & Decoupling
 To center the bipolar AC secondary voltage within the unipolar $0-3.3\text{V}$ range, we construct an external voltage divider:
@@ -153,15 +153,15 @@ On our physical hardware, the actual resting DC bias at GPIO 35 was measured at 
 $$\Delta \text{ADC} = 1803.0 - 1760.0 = \mathbf{+43.0\text{ counts}}$$
 
 Now observe how this static error propagates through the discrete RMS integration:
-$$i_{inst}[n] = \text{sample\_I}[n] - 1760.0 = 1803.0 - 1760.0 = 43.0$$
+$$i_{\text{inst}}[n] = I_{\text{sample}}[n] - 1760.0 = 1803.0 - 1760.0 = 43.0$$
 
 Over $N$ samples at idle:
-$$\sum_{n=1}^{N} i_{inst}^2[n] = N \times (43.0)^2 = N \times 1849$$
-$$\sqrt{\frac{1}{N} \sum_{n=1}^{N} i_{inst}^2[n]} = \sqrt{1849} = \mathbf{43.0\text{ counts}}$$
+$$\sum_{n=1}^{N} i_{\text{inst}}^2[n] = N \times (43.0)^2 = N \times 1849$$
+$$\sqrt{\frac{1}{N} \sum_{n=1}^{N} i_{\text{inst}}^2[n]} = \sqrt{1849} = \mathbf{43.0\text{ counts}}$$
 
-Converting counts to physical Amperes using our sensor calibration constant ($\text{CURRENT\_CAL} = 100.0$):
-$$I_{RMS} = 43.0 \times \left(\frac{3.3\text{V}}{4095}\right) \times 100.0$$
-$$I_{RMS} = 43.0 \times 0.0008058608 \times 100.0 = \mathbf{3.465\text{ A}}$$
+Converting counts to physical Amperes using our sensor calibration constant (`CURRENT_CAL` = 100.0):
+$$I_{\text{RMS}} = 43.0 \times \left(\frac{3.3\text{V}}{4095}\right) \times 100.0$$
+$$I_{\text{RMS}} = 43.0 \times 0.0008058608 \times 100.0 = \mathbf{3.465\text{ A}}$$
 
 Because $3.47\text{A}$ is well above standard noise gate thresholds ($0.8\text{A}$), the meter was trapped in a state where it perpetually displayed a **~3.5A phantom load**.
 
@@ -300,8 +300,8 @@ $$p(t) = v(t) \cdot i(t)$$
 Real active power ($P$) is the discrete time average of $p[n]$:
 $$P = \frac{1}{N} \sum_{n=1}^{N} v_{inst}[n] \cdot i_{inst}[n] \times K_V \times K_I$$
 Where:
-$$K_V = \left(\frac{3.3}{4095}\right) \times \text{VOLTAGE\_CAL} = 0.71203\text{ V/count}$$
-$$K_I = \left(\frac{3.3}{4095}\right) \times \text{CURRENT\_CAL} = 0.08059\text{ A/count}$$
+$$K_V = \left(\frac{3.3}{4095}\right) \times \text{VOLTAGE\_CAL} = 0.71203\text{ V/count} \quad (\text{using } \text{VOLTAGE\_CAL} = 883.58)$$
+$$K_I = \left(\frac{3.3}{4095}\right) \times \text{CURRENT\_CAL} = 0.08059\text{ A/count} \quad (\text{using } \text{CURRENT\_CAL} = 100.0)$$
 
 Apparent power ($S$) represents the total capacity required by the grid:
 $$S = V_{RMS} \times I_{RMS}$$
