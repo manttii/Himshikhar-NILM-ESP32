@@ -395,6 +395,10 @@ void classifyAppliance() {
 
 ## 8. Digital Twin: MATLAB/Simulink Co-Simulation & Verification
 
+![Figure 7: MATLAB/Simulink Digital Twin Architecture](../simulink/simulink_model_architecture.png)  
+*Figure 7: Architectural schematic of the MATLAB/Simulink digital twin (NILM_Himshikhar_Portal.slx) co-simulating grid generation, dual-sensor analog front-end conditioning, 12-bit ADC quantization, discrete firmware execution, and automated NILM load classification.*
+
+
 To validate that the discrete C++ firmware algorithm behaves identically to theoretical power equations before bench deployment, we constructed a complete digital twin in **MATLAB/Simulink R2026a** (`NILM_Himshikhar_Portal.slx`).
 
 ### 8.1 Digital Twin Architecture

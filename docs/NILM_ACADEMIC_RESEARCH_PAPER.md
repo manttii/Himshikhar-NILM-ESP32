@@ -377,6 +377,9 @@ Appliance classification is executed locally by a deterministic Finite State Mac
 *Figure 10: Multi-dimensional appliance operational clusters in the active-reactive (P-Q) plane. Resistive, inductive, and reactive loads map to distinct orthogonal clusters.*
 
 #### Table 7: Digital Twin & Hardware Verification Matrix
+![Figure 11: MATLAB/Simulink Digital Twin Architecture](figures/simulink_model_architecture.png)  
+*Figure 11: Architectural schematic of the MATLAB/Simulink digital twin (NILM_Himshikhar_Portal.slx), capturing AC mains waveform generation, discrete appliance switching, ZMPT101B and SCT-013 analog scaling, ESP32 12-bit SAR ADC quantization, discrete firmware execution (captureAndCalculate_Firmware), and automated NILM state classification.*
+
 | Operating State | Real Power ($P_{\text{real}}$) | Current ($I_{\text{RMS}}$) | Power Factor ($\text{PF}$) | Phase Angle ($\theta$) | FSM State | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Idle / Standby** | $0.0\text{ W}$ | $0.00\text{ A}$ | $1.00$ | $0.0^\circ$ | State 0 | **PASS** |
