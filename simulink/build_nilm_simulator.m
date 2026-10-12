@@ -1,0 +1,316 @@
+%% Himshikhar 2026 Energy Portal - ESP32 NILM Energy Meter & Appliance Simulator
+% Automated Simulink Model Generator
+% Authors: Manit Sharma (Roll No: 36)
+% Hardware Target: ESP32 DevKit + ZMPT101B + SCT-013 CT Sensor + 1760 ADC Bias
+
+function build_nilm_simulator()
+    modelName = 'NILM_Himshikhar_Portal';
+    
+    % Close if already open
+    if bdIsLoaded(modelName)
+        close_system(modelName, 0);
+    end
+    
+    % Create new system
+    new_system(modelName);
+    load_system('simulink');
+    
+    % Configure solver: Fixed-step discrete at Ts = 0.0002s (5000 Hz, 100 samples/cycle)
+    % 100ms window = 500 samples
+    set_param(modelName, 'Solver', 'FixedStepDiscrete', ...
+                         'FixedStep', '0.0002', ...
+                         'StopTime', '10');
+    
+    disp('Building AC Grid & Switchable Household Appliances...');
+    % =========================================================================
+    % 1. AC Grid (230V RMS, 50 Hz)
+    % =========================================================================
+    % V(t) = 230*sqrt(2)*sin(2*pi*50*t) -> Vpk = 325.2691 V
+    v_grid = add_block('simulink/Sources/Sine Wave', [modelName '/AC_Grid_230V_50Hz']);
+    set_param(v_grid, 'Amplitude', '325.2691', ...
+                      'Frequency', '2*pi*50', ...
+                      'SampleTime', '0.0002', ...
+                      'Position', [40, 100, 110, 140]);
+    
+    % =========================================================================
+    % 2. Switchable Household Appliances (NILM Load Signatures)
+    % =========================================================================
+    % Appliance 1: 1000W Resistive Heater (PF = 1.0, Theta = 0 deg)
+    % Irms = 1000/230 = 4.3478 A -> Ipk = 6.1487 A, Phase = 0
+    i_app1 = add_block('simulink/Sources/Sine Wave', [modelName '/Load1_Heater_1000W']);
+    set_param(i_app1, 'Amplitude', '6.1487', 'Frequency', '2*pi*50', 'Phase', '0', ...
+                      'SampleTime', '0.0002', 'Position', [40, 200, 110, 240]);
+    sw1 = add_block('simulink/Signal Routing/Manual Switch', [modelName '/Switch_Heater']);
+    set_param(sw1, 'CurrentSetting', '1', 'Position', [160, 207, 190, 243]); % Default ON
+    c_off1 = add_block('simulink/Sources/Constant', [modelName '/Off_1'], 'Value', '0', 'Position', [120, 240, 140, 255]);
+    add_line(modelName, 'Load1_Heater_1000W/1', 'Switch_Heater/1', 'autorouting', 'on');
+    add_line(modelName, 'Off_1/1', 'Switch_Heater/2', 'autorouting', 'on');
+
+    % Appliance 2: 350W Refrigerator Motor (Inductive, PF = 0.72 lag, Theta = 43.95 deg)
+    % S = 350/0.72 = 486.11 VA -> Irms = 2.1135 A -> Ipk = 2.9890 A, Phase = -43.95 deg = -0.7679 rad
+    i_app2 = add_block('simulink/Sources/Sine Wave', [modelName '/Load2_Fridge_Motor_350W']);
+    set_param(i_app2, 'Amplitude', '2.9890', 'Frequency', '2*pi*50', 'Phase', '-0.7679', ...
+                      'SampleTime', '0.0002', 'Position', [40, 290, 110, 330]);
+    sw2 = add_block('simulink/Signal Routing/Manual Switch', [modelName '/Switch_Motor']);
+    set_param(sw2, 'CurrentSetting', '0', 'Position', [160, 297, 190, 333]); % Default OFF
+    c_off2 = add_block('simulink/Sources/Constant', [modelName '/Off_2'], 'Value', '0', 'Position', [120, 330, 140, 345]);
+    add_line(modelName, 'Load2_Fridge_Motor_350W/1', 'Switch_Motor/1', 'autorouting', 'on');
+    add_line(modelName, 'Off_2/1', 'Switch_Motor/2', 'autorouting', 'on');
+
+    % Appliance 3: 800W Microwave (Inductive/Reactive, PF = 0.88 lag, Theta = 28.36 deg)
+    % S = 800/0.88 = 909.09 VA -> Irms = 3.9526 A -> Ipk = 5.5898 A, Phase = -28.36 deg = -0.4949 rad
+    i_app3 = add_block('simulink/Sources/Sine Wave', [modelName '/Load3_Microwave_800W']);
+    set_param(i_app3, 'Amplitude', '5.5898', 'Frequency', '2*pi*50', 'Phase', '-0.4949', ...
+                      'SampleTime', '0.0002', 'Position', [40, 380, 110, 420]);
+    sw3 = add_block('simulink/Signal Routing/Manual Switch', [modelName '/Switch_Microwave']);
+    set_param(sw3, 'CurrentSetting', '0', 'Position', [160, 387, 190, 423]); % Default OFF
+    c_off3 = add_block('simulink/Sources/Constant', [modelName '/Off_3'], 'Value', '0', 'Position', [120, 420, 140, 435]);
+    add_line(modelName, 'Load3_Microwave_800W/1', 'Switch_Microwave/1', 'autorouting', 'on');
+    add_line(modelName, 'Off_3/1', 'Switch_Microwave/2', 'autorouting', 'on');
+
+    % Sum of load currents -> Total Line Current I(t)
+    sum_i = add_block('simulink/Math Operations/Sum', [modelName '/Total_Line_Current']);
+    set_param(sum_i, 'Inputs', '+++', 'Position', [240, 275, 270, 355]);
+    add_line(modelName, 'Switch_Heater/1', 'Total_Line_Current/1', 'autorouting', 'on');
+    add_line(modelName, 'Switch_Motor/1',  'Total_Line_Current/2', 'autorouting', 'on');
+    add_line(modelName, 'Switch_Microwave/1', 'Total_Line_Current/3', 'autorouting', 'on');
+
+    % =========================================================================
+    % 3. ESP32 Hardware ADC Emulation (ZMPT101B, SCT-013, 1760 Offset, 12-bit)
+    % =========================================================================
+    disp('Emulating ESP32 Sensor Conditioning & 12-bit ADC (Pins 34 & 35)...');
+    % Voltage ADC Emulation:
+    % Physical V -> scale -> + 1760 offset -> Quantize 0..4095
+    % Kv = 1 / ((3.3/4095) * 883.58) = 1.404415 counts/V
+    gain_vadc = add_block('simulink/Math Operations/Gain', [modelName '/ZMPT101B_Scale']);
+    set_param(gain_vadc, 'Gain', '1.404415', 'Position', [320, 105, 360, 135]);
+    c_bias_v = add_block('simulink/Sources/Constant', [modelName '/DC_Bias_1760_V'], 'Value', '1760', 'Position', [320, 150, 360, 170]);
+    sum_adc_v = add_block('simulink/Math Operations/Sum', [modelName '/Sum_ADC_V'], 'Inputs', '++', 'Position', [390, 110, 410, 150]);
+    round_adc_v = add_block('simulink/Math Operations/Rounding Function', [modelName '/Quantize_ADC_V'], 'Operator', 'round', 'Position', [435, 120, 465, 140]);
+    sat_adc_v = add_block('simulink/Discontinuities/Saturation', [modelName '/ESP32_12Bit_Clamp_V'], 'UpperLimit', '4095', 'LowerLimit', '0', 'Position', [490, 120, 520, 140]);
+
+    add_line(modelName, 'AC_Grid_230V_50Hz/1', 'ZMPT101B_Scale/1', 'autorouting', 'on');
+    add_line(modelName, 'ZMPT101B_Scale/1', 'Sum_ADC_V/1', 'autorouting', 'on');
+    add_line(modelName, 'DC_Bias_1760_V/1', 'Sum_ADC_V/2', 'autorouting', 'on');
+    add_line(modelName, 'Sum_ADC_V/1', 'Quantize_ADC_V/1', 'autorouting', 'on');
+    add_line(modelName, 'Quantize_ADC_V/1', 'ESP32_12Bit_Clamp_V/1', 'autorouting', 'on');
+
+    % Current ADC Emulation:
+    % Physical I -> scale -> + 1760 offset -> Quantize 0..4095
+    % Ki = 1 / ((3.3/4095) * 100.0) = 12.409091 counts/A
+    gain_iadc = add_block('simulink/Math Operations/Gain', [modelName '/SCT013_Scale']);
+    set_param(gain_iadc, 'Gain', '12.409091', 'Position', [320, 305, 360, 335]);
+    c_bias_i = add_block('simulink/Sources/Constant', [modelName '/DC_Bias_1760_I'], 'Value', '1760', 'Position', [320, 350, 360, 370]);
+    sum_adc_i = add_block('simulink/Math Operations/Sum', [modelName '/Sum_ADC_I'], 'Inputs', '++', 'Position', [390, 310, 410, 350]);
+    round_adc_i = add_block('simulink/Math Operations/Rounding Function', [modelName '/Quantize_ADC_I'], 'Operator', 'round', 'Position', [435, 320, 465, 340]);
+    sat_adc_i = add_block('simulink/Discontinuities/Saturation', [modelName '/ESP32_12Bit_Clamp_I'], 'UpperLimit', '4095', 'LowerLimit', '0', 'Position', [490, 320, 520, 340]);
+
+    add_line(modelName, 'Total_Line_Current/1', 'SCT013_Scale/1', 'autorouting', 'on');
+    add_line(modelName, 'SCT013_Scale/1', 'Sum_ADC_I/1', 'autorouting', 'on');
+    add_line(modelName, 'DC_Bias_1760_I/1', 'Sum_ADC_I/2', 'autorouting', 'on');
+    add_line(modelName, 'Sum_ADC_I/1', 'Quantize_ADC_I/1', 'autorouting', 'on');
+    add_line(modelName, 'Quantize_ADC_I/1', 'ESP32_12Bit_Clamp_I/1', 'autorouting', 'on');
+
+    % =========================================================================
+    % 4. ESP32 Firmware Subsystem: captureAndCalculate()
+    % Exact discrete circular integration matching the 100ms window
+    % =========================================================================
+    disp('Implementing ESP32 captureAndCalculate() Algorithm Subsystem...');
+    firmware_blk = add_block('simulink/User-Defined Functions/MATLAB Function', [modelName '/captureAndCalculate_Firmware']);
+    set_param(firmware_blk, 'Position', [580, 180, 720, 280]);
+    
+    rt = sfroot;
+    m = rt.find('-isa', 'Stateflow.EMChart', 'Path', [modelName '/captureAndCalculate_Firmware']);
+    
+    % MATLAB Function code directly mirroring user's ESP32 C++ algorithm
+    m.Script = sprintf([...
+        'function [V_rms, I_rms, real_power, apparent_power, power_factor, phase_difference] = captureAndCalculate_Firmware(sample_V, sample_I)\n', ...
+        '%% ESP32 captureAndCalculate() Firmware Implementation\n', ...
+        '%% Constants from user firmware:\n', ...
+        'VOLTAGE_CAL = 883.58;\n', ...
+        'CURRENT_CAL = 100.0;\n', ...
+        'voltage_offset = 1760.0;\n', ...
+        'current_offset = 1760.0;\n\n', ...
+        '%% Instantaneous signals:\n', ...
+        'inst_V = double(sample_V) - voltage_offset;\n', ...
+        'inst_I = double(sample_I) - current_offset;\n\n', ...
+        '%% 100ms Temporal Lock Window (N = 500 samples at Ts = 0.0002s):\n', ...
+        'N = 500;\n', ...
+        'persistent buf_V_sq buf_I_sq buf_P_inst ptr count_samples\n', ...
+        'if isempty(ptr)\n', ...
+        '    buf_V_sq = zeros(1, N);\n', ...
+        '    buf_I_sq = zeros(1, N);\n', ...
+        '    buf_P_inst = zeros(1, N);\n', ...
+        '    ptr = 1;\n', ...
+        '    count_samples = 0;\n', ...
+        'end\n\n', ...
+        '%% Store instantaneous products into window:\n', ...
+        'buf_V_sq(ptr) = inst_V * inst_V;\n', ...
+        'buf_I_sq(ptr) = inst_I * inst_I;\n', ...
+        'buf_P_inst(ptr) = inst_V * inst_I;\n\n', ...
+        'ptr = ptr + 1;\n', ...
+        'if ptr > N\n', ...
+        '    ptr = 1;\n', ...
+        'end\n', ...
+        'if count_samples < N\n', ...
+        '    count_samples = count_samples + 1;\n', ...
+        'end\n\n', ...
+        '%% RMS and Power calculations:\n', ...
+        'sum_V_squared = sum(buf_V_sq(1:count_samples));\n', ...
+        'sum_I_squared = sum(buf_I_sq(1:count_samples));\n', ...
+        'sum_inst_power = sum(buf_P_inst(1:count_samples));\n', ...
+        'sample_count = count_samples;\n\n', ...
+        'V_rms = sqrt(sum_V_squared / sample_count) * (3.3 / 4095.0) * VOLTAGE_CAL;\n', ...
+        'I_rms = sqrt(sum_I_squared / sample_count) * (3.3 / 4095.0) * CURRENT_CAL;\n\n', ...
+        '%% Hardware Noise Gates:\n', ...
+        'if (I_rms < 0.8)\n', ...
+        '    I_rms = 0.0;\n', ...
+        'end\n', ...
+        'if (V_rms < 10.0)\n', ...
+        '    V_rms = 0.0;\n', ...
+        'end\n\n', ...
+        'real_power = (sum_inst_power / sample_count) * (3.3 / 4095.0)^2 * VOLTAGE_CAL * CURRENT_CAL;\n', ...
+        'apparent_power = V_rms * I_rms;\n\n', ...
+        'if (apparent_power > 5.0)\n', ...
+        '    power_factor = real_power / apparent_power;\n', ...
+        '    if (power_factor > 1.0), power_factor = 1.0; end\n', ...
+        '    if (power_factor < -1.0), power_factor = -1.0; end\n', ...
+        '    phase_difference = acos(power_factor) * (180.0 / pi);\n', ...
+        'else\n', ...
+        '    power_factor = 1.0;\n', ...
+        '    phase_difference = 0.0;\n', ...
+        'end\n']);
+
+    add_line(modelName, 'ESP32_12Bit_Clamp_V/1', 'captureAndCalculate_Firmware/1', 'autorouting', 'on');
+    add_line(modelName, 'ESP32_12Bit_Clamp_I/1', 'captureAndCalculate_Firmware/2', 'autorouting', 'on');
+
+    % =========================================================================
+    % 5. Automated NILM Load Classifier Subsystem
+    % =========================================================================
+    disp('Creating NILM Appliance Disaggregation & Classification Subsystem...');
+    nilm_blk = add_block('simulink/User-Defined Functions/MATLAB Function', [modelName '/NILM_Load_Classifier']);
+    set_param(nilm_blk, 'Position', [770, 310, 890, 370]);
+    
+    m_nilm = rt.find('-isa', 'Stateflow.EMChart', 'Path', [modelName '/NILM_Load_Classifier']);
+    m_nilm.Script = sprintf([...
+        'function [state_code, active_appliance_id] = NILM_Load_Classifier(P, I_rms, pf)\n', ...
+        '%% NILM Non-Intrusive Appliance Classifier\n', ...
+        '%% State 0: No Load / Idle\n', ...
+        '%% State 1: Appliance 1 (Heater, 1000W, PF=1.0)\n', ...
+        '%% State 2: Appliance 2 (Refrigerator Motor, 350W, PF=0.72)\n', ...
+        '%% State 3: Appliance 3 (Microwave, 800W, PF=0.88)\n', ...
+        '%% State 4: Combined Multiple Loads\n\n', ...
+        'if (I_rms < 0.5 || P < 50.0)\n', ...
+        '    state_code = 0; %% Idle\n', ...
+        '    active_appliance_id = 0;\n', ...
+        'elseif (P >= 900 && P <= 1100 && pf >= 0.96)\n', ...
+        '    state_code = 1; %% Heater alone\n', ...
+        '    active_appliance_id = 1;\n', ...
+        'elseif (P >= 280 && P <= 420 && pf >= 0.65 && pf <= 0.78)\n', ...
+        '    state_code = 2; %% Fridge motor alone\n', ...
+        '    active_appliance_id = 2;\n', ...
+        'elseif (P >= 720 && P <= 880 && pf >= 0.82 && pf <= 0.92)\n', ...
+        '    state_code = 3; %% Microwave alone\n', ...
+        '    active_appliance_id = 3;\n', ...
+        'else\n', ...
+        '    state_code = 4; %% Multiple appliances active\n', ...
+        '    active_appliance_id = 4;\n', ...
+        'end\n']);
+
+    add_line(modelName, 'captureAndCalculate_Firmware/3', 'NILM_Load_Classifier/1', 'autorouting', 'on'); % P
+    add_line(modelName, 'captureAndCalculate_Firmware/2', 'NILM_Load_Classifier/2', 'autorouting', 'on'); % I_rms
+    add_line(modelName, 'captureAndCalculate_Firmware/5', 'NILM_Load_Classifier/3', 'autorouting', 'on'); % pf
+
+    % =========================================================================
+    % 6. Himshikhar 2026 Portal Displays & Dashboard
+    % =========================================================================
+    disp('Constructing Himshikhar 2026 Energy Portal Displays...');
+    d_v = add_block('simulink/Sinks/Display', [modelName '/Voltage_Node_V']);
+    set_param(d_v, 'Position', [820, 100, 910, 130]);
+    add_line(modelName, 'captureAndCalculate_Firmware/1', 'Voltage_Node_V/1', 'autorouting', 'on');
+
+    d_i = add_block('simulink/Sinks/Display', [modelName '/Current_Node_A']);
+    set_param(d_i, 'Position', [820, 140, 910, 170]);
+    add_line(modelName, 'captureAndCalculate_Firmware/2', 'Current_Node_A/1', 'autorouting', 'on');
+
+    d_p = add_block('simulink/Sinks/Display', [modelName '/Real_Power_Watts']);
+    set_param(d_p, 'Position', [820, 180, 910, 210]);
+    add_line(modelName, 'captureAndCalculate_Firmware/3', 'Real_Power_Watts/1', 'autorouting', 'on');
+
+    d_s = add_block('simulink/Sinks/Display', [modelName '/Apparent_Power_VA']);
+    set_param(d_s, 'Position', [820, 220, 910, 250]);
+    add_line(modelName, 'captureAndCalculate_Firmware/4', 'Apparent_Power_VA/1', 'autorouting', 'on');
+
+    d_pf = add_block('simulink/Sinks/Display', [modelName '/Power_Factor_PF']);
+    set_param(d_pf, 'Position', [820, 260, 910, 290]);
+    add_line(modelName, 'captureAndCalculate_Firmware/5', 'Power_Factor_PF/1', 'autorouting', 'on');
+
+    d_th = add_block('simulink/Sinks/Display', [modelName '/Phase_Angle_Theta_deg']);
+    set_param(d_th, 'Position', [940, 260, 1030, 290]);
+    add_line(modelName, 'captureAndCalculate_Firmware/6', 'Phase_Angle_Theta_deg/1', 'autorouting', 'on');
+
+    d_nilm = add_block('simulink/Sinks/Display', [modelName '/NILM_Active_Load_Code']);
+    set_param(d_nilm, 'Position', [940, 325, 1030, 355]);
+    add_line(modelName, 'NILM_Load_Classifier/1', 'NILM_Active_Load_Code/1', 'autorouting', 'on');
+
+    % =========================================================================
+    % 7. Live Waveform Oscilloscope (Visualizing Phase Shifts)
+    % =========================================================================
+    disp('Configuring Waveform Oscilloscope...');
+    scope_blk = add_block('simulink/Sinks/Scope', [modelName '/Live_Vector_Oscilloscope']);
+    set_param(scope_blk, 'NumInputPorts', '2', 'Position', [820, 420, 870, 480]);
+
+    % Multiply current by 30 so V(t) and I(t)*30 can be compared clearly on Axis 1
+    gain_i_zoom = add_block('simulink/Math Operations/Gain', [modelName '/I_Scale_x30_for_Scope']);
+    set_param(gain_i_zoom, 'Gain', '30', 'Position', [340, 430, 380, 460]);
+    add_line(modelName, 'Total_Line_Current/1', 'I_Scale_x30_for_Scope/1', 'autorouting', 'on');
+
+    mux_scope1 = add_block('simulink/Signal Routing/Mux', [modelName '/Mux_Scope1'], 'Inputs', '2', 'Position', [450, 410, 460, 470]);
+    add_line(modelName, 'AC_Grid_230V_50Hz/1', 'Mux_Scope1/1', 'autorouting', 'on');
+    add_line(modelName, 'I_Scale_x30_for_Scope/1', 'Mux_Scope1/2', 'autorouting', 'on');
+    add_line(modelName, 'Mux_Scope1/1', 'Live_Vector_Oscilloscope/1', 'autorouting', 'on');
+
+    % Raw ADC samples on Axis 2
+    mux_scope2 = add_block('simulink/Signal Routing/Mux', [modelName '/Mux_Scope2'], 'Inputs', '2', 'Position', [570, 450, 580, 500]);
+    add_line(modelName, 'ESP32_12Bit_Clamp_V/1', 'Mux_Scope2/1', 'autorouting', 'on');
+    add_line(modelName, 'ESP32_12Bit_Clamp_I/1', 'Mux_Scope2/2', 'autorouting', 'on');
+    add_line(modelName, 'Mux_Scope2/1', 'Live_Vector_Oscilloscope/2', 'autorouting', 'on');
+
+    % =========================================================================
+    % 8. Outports (For programmatic validation)
+    % =========================================================================
+    out_v = add_block('simulink/Ports & Subsystems/Out1', [modelName '/V_out']);
+    set_param(out_v, 'Position', [940, 105, 970, 125]);
+    add_line(modelName, 'captureAndCalculate_Firmware/1', 'V_out/1', 'autorouting', 'on');
+
+    out_i = add_block('simulink/Ports & Subsystems/Out1', [modelName '/I_out']);
+    set_param(out_i, 'Position', [940, 145, 970, 165]);
+    add_line(modelName, 'captureAndCalculate_Firmware/2', 'I_out/1', 'autorouting', 'on');
+
+    out_p = add_block('simulink/Ports & Subsystems/Out1', [modelName '/P_out']);
+    set_param(out_p, 'Position', [940, 185, 970, 205]);
+    add_line(modelName, 'captureAndCalculate_Firmware/3', 'P_out/1', 'autorouting', 'on');
+
+    out_pf = add_block('simulink/Ports & Subsystems/Out1', [modelName '/PF_out']);
+    set_param(out_pf, 'Position', [940, 225, 970, 245]);
+    add_line(modelName, 'captureAndCalculate_Firmware/5', 'PF_out/1', 'autorouting', 'on');
+
+    % Documentation Header Annotation
+    noteText = sprintf([...
+        'HIMSHIKHAR 2026 ENERGY PORTAL - ESP32 NILM ENERGY METER SIMULATION\n', ...
+        'Hardware: ESP32 ADC (Pins 34/35), ZMPT101B (Voltage), SCT-013 (Current), +1760 DC Bias Offset\n', ...
+        'Firmware: captureAndCalculate() running 100ms temporal window with hardware noise gating\n\n', ...
+        'NILM Loads: Double-click any "Switch" to turn appliances ON/OFF live:\n', ...
+        ' • Switch 1: 1000W Heater (Resistive, PF = 1.0, Theta = 0°)\n', ...
+        ' • Switch 2: 350W Refrigerator Motor (Inductive, PF = 0.72 lag, Theta = 44°)\n', ...
+        ' • Switch 3: 800W Microwave (Reactive, PF = 0.88 lag, Theta = 28°)\n', ...
+        'NILM Active Load Code: 0=Idle | 1=Heater | 2=Fridge Motor | 3=Microwave | 4=Combined Loads']);
+    try
+        add_annotation(modelName, noteText, 'Position', [500, 35], 'FontSize', 11, 'FontWeight', 'bold');
+    catch
+    end
+
+    % Save model
+    save_system(modelName);
+    disp(['Simulink NILM Model generated successfully: ' modelName '.slx']);
+end

@@ -1,0 +1,19 @@
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Arduino / PlatformIO Build Artifacts
+.pio/
+.vscode/
+build/
+*.bin
+*.elf
+*.hex
+
+# MATLAB / Simulink Cache & Autosaves
+slprj/
+*.asv
+*.autosave
