@@ -93,7 +93,7 @@ Where:
 
    $\text{Sensitivity} = \frac{100.0\text{ A}}{1.0\text{ V}} = \mathbf{100.0\text{ A/V}}$
 
-   *(This corresponds to an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or $33\,\Omega$ with appropriate software scaling).*
+   (This corresponds to an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or $33\,\Omega$ with appropriate software scaling).
 4. Substituting into the firmware formulation:
 
    $I_{\text{RMS}} = V_{\text{pin, RMS}} \times K_I \implies K_I = 100.0$
@@ -141,7 +141,7 @@ This firmware implements an intelligent two-tier auto-tracking engine:
 
 2. **Dynamic Integer-Cycle Tracking (EMA):** Because the $100\text{ ms}$ temporal lock window spans exactly $5$ complete AC cycles, the fundamental sinusoidal current averages to zero ($\int_0^{5T} i(t) dt = 0$). Any non-zero mean over the window represents physical DC bias, updated recursively:
 
-   $\bar{I}_{\text{window}} = \frac{1}{N} \sum_{n=1}^{N} \text{ADC}_I[n]$
+   $\bar{I}\_{\text{window}} = \frac{1}{N} \sum\_{n=1}^{N} \text{ADC}\_I[n]$
 
    $I_{\text{offset}}[k] = 0.95 \cdot I_{\text{offset}}[k-1] + 0.05 \cdot \bar{I}_{\text{window}}$
 
