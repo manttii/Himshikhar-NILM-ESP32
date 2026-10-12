@@ -82,6 +82,87 @@ fig2.savefig(os.path.join(out_dir, "fig2_swiss_2022_sector_share.png"), dpi=300,
 plt.close(fig2)
 
 # -------------------------------------------------------------
+# FIGURE 3: Electricity use by purpose in typical Swiss residences
+# -------------------------------------------------------------
+print("Regenerating Fig 3...")
+fig3, ax3 = plt.subplots(figsize=(7.5, 7.5), dpi=300)
+
+labels_fig3 = [
+    'Heating\n25%',
+    'Others\n13%',
+    'Laundry\n6%',
+    'AC & Ventilation\n6%',
+    'Lighting\n7%',
+    'Entertainment & IT\n8%',
+    'Refrigeration\n8%',
+    'Hot Water\n13%',
+    'Cooking\n14%'
+]
+sizes_fig3 = [25, 13, 6, 6, 7, 8, 8, 13, 14]
+colors_fig3 = [
+    '#542013',  # Heating: dark brown
+    '#083B3B',  # Others: dark teal slate
+    '#007E7E',  # Laundry: teal
+    '#619782',  # AC & Ventilation: muted sage teal
+    '#86B38E',  # Lighting: soft green
+    '#AFD0A9',  # Entertainment & IT: pale sage green
+    '#E1B46B',  # Refrigeration: sand yellow
+    '#D37B43',  # Hot Water: terracotta
+    '#C24323'   # Cooking: red-orange
+]
+
+# Text colors for optimal contrast
+text_colors = [
+    'white', 'white', 'white', 'white', '#111111', '#111111', '#111111', 'white', 'white'
+]
+
+wedges, _ = ax3.pie(
+    sizes_fig3,
+    colors=colors_fig3,
+    startangle=90,
+    counterclock=False,
+    wedgeprops=dict(edgecolor='white', linewidth=1.2, antialiased=True)
+)
+
+# Place labels cleanly in white font matching the publication
+# Angles proceed clockwise from 90 degrees
+current_angle = 90.0
+for size, label in zip(sizes_fig3, labels_fig3):
+    mid_angle = current_angle - (size * 3.6) / 2.0
+    rad = np.radians(mid_angle)
+    
+    # Custom radial placement to prevent label collisions
+    if 'Lighting' in label:
+        r = 0.73
+        fs = 8.5
+    elif 'AC' in label:
+        r = 0.60
+        fs = 8.0
+    elif 'Laundry' in label:
+        r = 0.68
+        fs = 9.0
+    elif 'Entertainment' in label:
+        r = 0.70
+        fs = 8.5
+    elif 'Refrigeration' in label:
+        r = 0.70
+        fs = 9.0
+    else:
+        r = 0.65
+        fs = 10.0
+        
+    x = r * np.cos(rad)
+    y = r * np.sin(rad)
+    ax3.text(x, y, label, ha='center', va='center', color='white', 
+             fontweight='bold', fontsize=fs)
+    current_angle -= size * 3.6
+
+ax3.axis('equal')
+plt.tight_layout()
+fig3.savefig(os.path.join(out_dir, "fig3_residential_end_use.png"), dpi=300, bbox_inches='tight')
+plt.close(fig3)
+
+# -------------------------------------------------------------
 # FIGURE 4: Workflow flowchart of NILM Framework
 # -------------------------------------------------------------
 print("Regenerating Fig 4...")
@@ -357,8 +438,8 @@ for col_idx, app in enumerate(appliances):
         else:
             ax.set_yticklabels([])
 
-for col_idx in range(6):
-    axes[2, col_idx].set_xlabel('Sampling Frequency (min)', fontsize=10, labelpad=6)
+# Clean, centered figure-level X-axis label matching the publication exactly
+fig5.text(0.52, 0.02, 'Sampling Frequency (in minutes)', ha='center', va='center', fontsize=12)
 
 handles, labels = axes[0, 0].get_legend_handles_labels()
 fig5.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 0.99), 

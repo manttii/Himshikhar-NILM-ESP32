@@ -35,10 +35,10 @@ In 2022, final electricity consumption reached $208.5\text{ thousand TJ}$. As sh
 ![Figure 2: Final Electricity Consumption Share by Sector in Switzerland (2022)](figures/fig2_swiss_2022_sector_share.png)  
 *Figure 2: Sectoral breakdown of Swiss final electricity consumption in 2022. The residential sector constitutes the largest single share at 33.9%.*
 
-Within Swiss residential buildings, thermal loads dominate overall demand. As detailed in Figure 3, space heating accounts for approximately $65\%$ of total residential household energy consumption, followed by domestic hot water heating ($13\%$), lighting and household plug appliances ($14\%$), and cooking ($8\%$). Consequently, granular identification of heating and appliance consumption is imperative for targeted demand response, load shifting, and energy efficiency retrofitting.
+Within Swiss residential buildings, electricity consumption is distributed across distinct thermal and end-use appliance categories. As detailed in Figure 3, space heating accounts for $25\%$ of typical residential electricity use, followed by cooking ($14\%$), domestic hot water ($13\%$), miscellaneous/others ($13\%$), refrigeration ($8\%$), entertainment and IT ($8\%$), lighting ($7\%$), space cooling and ventilation ($6\%$), and laundry ($6\%$). Collectively, household appliances used for cooking, refrigeration, laundry, entertainment, and IT constitute approximately $40\%$ of residential electricity demand. Consequently, granular disaggregation of appliance-level electrical consumption via NILM is imperative for targeted demand response, dynamic tariff optimization, and energy efficiency retrofitting.
 
-![Figure 3: Residential Energy End-Use Breakdown in Switzerland](figures/fig3_residential_end_use.png)  
-*Figure 3: End-use energy consumption breakdown in Swiss households. Space heating and water heating collectively account for 78% of residential thermal and electrical energy.*
+![Figure 3: Residential Electricity End-Use Breakdown in Switzerland](figures/fig3_residential_end_use.png)  
+*Figure 3: Electricity use by purpose in typical Swiss residences (Chatterjee & Heer, 2025; BFE / SFOE). Electrical appliances for cooking, refrigeration, laundry, and electronics constitute approximately 40% of residential electricity consumption, with direct electric heating and hot water representing an additional 38%.*
 
 ### 1.2 The Non-Intrusive Load Monitoring Paradigm
 Traditional residential energy disaggregation relies on distributed sub-metering, wherein physical IoT metering plugs are attached to individual appliances. While sub-metering yields high accuracy, it incurs prohibitive capital costs, installation labor, and customer privacy friction.
@@ -222,17 +222,19 @@ Table 3 documents the composite scores calculated across all algorithms, identif
 
 *Bold values denote the best-performing algorithm (lowest composite score) for that appliance and frequency.*
 
-Synthesizing Table 3 yields the definitive selection of top-performing algorithms in Table 4.
+Synthesizing Table 3 yields the definitive selection of top-performing algorithms in Table 4, transcribing the verified benchmark allocations from Chatterjee & Heer (Table 4).
 
 #### Table 4: Best Performing Algorithms Across Appliances and Sampling Frequencies
 | Validation Scheme | Sampling Freq. | Kettle | Freezer | Washing Machine | Computer | Microwave | Television |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **REFIT-to-REFIT** | **1 min** | SGN | SGN | SGN | Seq2Point | SGN | SGN |
 | | **5 min** | SGN | Seq2Point | SGN | SGN | SGN | SGN |
-| | **15 min** | Seq2Point | BiLSTM | SGN | DAE / BiLSTM | Seq2Point / SGN | Seq2Point |
+| | **15 min** | Seq2Point | SGN | SGN | DAE | SGN | Seq2Point |
 | **REFIT-to-ECO** | **1 min** | SGN | Seq2Point | Seq2Point | BiLSTM | SGN | DAE |
-| | **5 min** | SGN | Seq2Point | SGN | BiLSTM | SGN | Seq2Point |
-| | **15 min** | SGN | SGN | DAE | DAE | Seq2Point | Seq2Point |
+| | **5 min** | SGN | Seq2Point | Seq2Point | BiLSTM | SGN | Seq2Point |
+| | **15 min** | SGN | SGN | Seq2Point | DAE | Seq2Point | Seq2Point |
+
+*Discussion of Algorithmic Selection:* SGN demonstrates overwhelming dominance in intra-dataset evaluation (accounting for 14 of the 18 top rankings across appliances and frequencies), benefiting from its localized sub-gradient spatial feature extraction. Under the coarsest $15\text{-minute}$ resolution on REFIT-to-REFIT, Seq2Point secures Kettle and Television disaggregation, DAE captures Computer baseload, while SGN retains Freezer, Washing Machine, and Microwave. Under cross-dataset transfer (REFIT-to-ECO), where appliance ratings and consumption dynamics diverge between UK and Swiss homes, model adaptability becomes paramount: Seq2Point demonstrates remarkable transferability on multi-state cyclic appliances (Washing Machine across all intervals; Freezer at $1$ and $5\text{ min}$; Microwave and Television at $15\text{ min}$), BiLSTM excels on Computer baseload at $1$ and $5\text{ min}$, DAE captures Television at $1\text{ min}$ and Computer at $15\text{ min}$, while SGN consistently leads for high-burst thermal loads (Kettle across all frequencies; Microwave at $1$ and $5\text{ min}$; Freezer at $15\text{ min}$).
 
 ### 3.5 Concurrent Multi-Appliance Operation (The CoWo vs. CaWa Paradox)
 In real-world households, multiple appliances run concurrently. A common concern in NILM is that heavy dynamic loads (such as a washing machine heating water and spinning) will obscure lower-power electronics (such as a desktop computer).
