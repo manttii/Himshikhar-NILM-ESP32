@@ -57,12 +57,12 @@ $$v_{inst}[n] = \text{ADC}_V[n] - V_{\text{offset}}$$
 $$i_{inst}[n] = \text{ADC}_I[n] - I_{\text{offset}}$$
 
 The true RMS values are computed using discrete numerical integration:
-$$V_{RMS} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} v_{inst}^2[n]} \times \left(\frac{3.3}{4095}\right) \times \text{VOLTAGE\_CAL}$$
-$$I_{RMS} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} i_{inst}^2[n]} \times \left(\frac{3.3}{4095}\right) \times \text{CURRENT\_CAL}$$
+$$V_{RMS} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} v_{inst}^2[n]} \times \left(\frac{3.3}{4095}\right) \times K_V$$
+$$I_{RMS} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} i_{inst}^2[n]} \times \left(\frac{3.3}{4095}\right) \times K_I$$
 
 Where:
 - $3.3 / 4095 \approx 0.00080586\text{ V/count}$ converts 12-bit ADC integers into physical pin voltages.
-- `VOLTAGE_CAL` and `CURRENT_CAL` are the physical sensor scaling gains ($\text{VOLTAGE\_CAL}$, $\text{CURRENT\_CAL}$).
+- `VOLTAGE_CAL` and `CURRENT_CAL` are the physical sensor scaling gains (VOLTAGE_CAL, CURRENT_CAL).
 
 ---
 
@@ -74,8 +74,8 @@ Where:
 3. The feedback trimpot is adjusted to yield an AC voltage swing of $0.26028\text{ V RMS}$ ($0.736\text{ V peak-to-peak}$) around the $1.65\text{V}$ midpoint:
    $$V_{\text{pin, RMS}} = 0.26028\text{ V}$$
 4. Setting up the transfer relationship:
-   $$V_{\text{RMS}} = V_{\text{pin, RMS}} \times \text{VOLTAGE\_CAL} \implies 230.0 = 0.26028 \times \text{VOLTAGE\_CAL}$$
-   $$\text{VOLTAGE\_CAL} = \frac{230.0}{0.26028} = \mathbf{883.58}$$
+   $$V_{\text{RMS}} = V_{\text{pin, RMS}} \times K_V \implies 230.0 = 0.26028 \times K_V$$
+   $$K_V = \frac{230.0}{0.26028} = \mathbf{883.58}$$
 
 #### B. Current Calibration (`CURRENT_CAL` = 100.0)
 1. The SCT-013-000 current transformer features a turns ratio of $N_p : N_s = 1 : 2000$.
@@ -85,14 +85,14 @@ Where:
    $$\text{Sensitivity} = \frac{100.0\text{ A}}{1.0\text{ V}} = \mathbf{100.0\text{ A/V}}$$
    *(This corresponds to an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or $33\,\Omega$ with appropriate software scaling).*
 4. Substituting into the firmware formulation:
-   $$I_{\text{RMS}} = V_{\text{pin, RMS}} \times \text{CURRENT\_CAL} \implies \text{CURRENT\_CAL} = 100.0$$
+   $$I_{\text{RMS}} = V_{\text{pin, RMS}} \times K_I \implies K_I = 100.0$$
 
 ---
 
 ### 2.4 Active Power, Apparent Power, Polarity & Phase Angle ($\theta$)
 
 Real active power ($P$) is the discrete time average of the instantaneous voltage-current product:
-$$P = \left(\frac{1}{N} \sum_{n=1}^{N} v_{inst}[n] \cdot i_{inst}[n]\right) \times \left(\frac{3.3}{4095}\right)^2 \times \text{VOLTAGE\_CAL} \times \text{CURRENT\_CAL}$$
+$$P = \left(\frac{1}{N} \sum_{n=1}^{N} v_{inst}[n] \cdot i_{inst}[n]\right) \times \left(\frac{3.3}{4095}\right)^2 \times K_V \times K_I$$
 
 Apparent power ($S$) represents total volt-amperes:
 $$S = V_{RMS} \times I_{RMS}$$

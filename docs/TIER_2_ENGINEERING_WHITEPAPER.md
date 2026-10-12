@@ -80,7 +80,7 @@ Current measurement is achieved through a split-core ferrite **SCT-013-000** cur
   $$V_{pk} = 0.0212\text{A} \times 33\,\Omega \approx 0.70\text{V} \implies V_{burden,pk-pk} = 1.40\text{V}_{pk-pk}$$
   Centered at $1.65\text{V}$, the waveform oscillates between $0.95\text{V}$ and $2.35\text{V}$, safely inside the linear dynamic range of the ESP32 ADC ($0.4\text{V} - 2.8\text{V}$).
 - **Transfer Sensitivity & Calibration Constant (`CURRENT_CAL` = 100.0):**
-  In discrete firmware calculations, line current is evaluated as $I_{\text{RMS}} = V_{\text{pin, RMS}} \times \text{CURRENT\_CAL}$ (in code: `I_RMS = V_pin_RMS * CURRENT_CAL`). The factor `CURRENT_CAL` = 100.0 A/V corresponds to a normalized sensitivity of $1.0\text{V RMS} \iff 100\text{A RMS}$, which is established with an effective burden resistance of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or through software scaling for $33\,\Omega$ burdens.
+  In discrete firmware calculations, line current is evaluated as $I_{\text{RMS}} = V_{\text{pin, RMS}} \times K_I$ (in code: `I_RMS = V_pin_RMS * CURRENT_CAL`). The factor `CURRENT_CAL` = 100.0 A/V corresponds to a normalized sensitivity of $1.0\text{V RMS} \iff 100\text{A RMS}$, which is established with an effective burden resistance of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or through software scaling for $33\,\Omega$ burdens.
 
 ### 2.3 The Midpoint DC Virtual Ground & Decoupling
 To center the bipolar AC secondary voltage within the unipolar $0-3.3\text{V}$ range, we construct an external voltage divider:
@@ -300,8 +300,8 @@ $$p(t) = v(t) \cdot i(t)$$
 Real active power ($P$) is the discrete time average of $p[n]$:
 $$P = \frac{1}{N} \sum_{n=1}^{N} v_{inst}[n] \cdot i_{inst}[n] \times K_V \times K_I$$
 Where:
-$$K_V = \left(\frac{3.3}{4095}\right) \times \text{VOLTAGE\_CAL} = 0.71203\text{ V/count} \quad (\text{using } \text{VOLTAGE\_CAL} = 883.58)$$
-$$K_I = \left(\frac{3.3}{4095}\right) \times \text{CURRENT\_CAL} = 0.08059\text{ A/count} \quad (\text{using } \text{CURRENT\_CAL} = 100.0)$$
+$$K_V = \left(\frac{3.3}{4095}\right) \times K_V = 0.71203\text{ V/count} \quad (\text{using } K_V = 883.58)$$
+$$K_I = \left(\frac{3.3}{4095}\right) \times K_I = 0.08059\text{ A/count} \quad (\text{using } K_I = 100.0)$$
 
 Apparent power ($S$) represents the total capacity required by the grid:
 $$S = V_{RMS} \times I_{RMS}$$
