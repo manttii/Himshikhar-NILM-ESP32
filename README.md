@@ -171,6 +171,7 @@ The MATLAB/Simulink digital twin (`NILM_Himshikhar_Portal.slx`) simulates the gr
 ```
 Himshikhar-NILM-ESP32/
 ├── docs/
+│   ├── NILM_ACADEMIC_RESEARCH_PAPER.md    # Full academic research paper (SIRED-2026 benchmark & ESP32 edge adaptation)
 │   └── TIER_2_ENGINEERING_WHITEPAPER.md   # Publication-ready engineering whitepaper
 ├── firmware/
 │   └── esp32_nilm_meter.ino               # Production ESP32 C++ firmware
@@ -222,4 +223,5 @@ Refer to [hardware/pinout_and_schematic.md](hardware/pinout_and_schematic.md) fo
 - **Author:** Manit Sharma ([@manttii](https://github.com/manttii))
 - **Program:** B.Tech Electronics & Communication Engineering (ECE), 3rd Semester
 - **Institution:** Graphic Era Deemed to be University, Dehradun, India
+- **Academic Research Paper:** Available in [docs/NILM_ACADEMIC_RESEARCH_PAPER.md](docs/NILM_ACADEMIC_RESEARCH_PAPER.md).
 - **Tier 2 Engineering Whitepaper:** Available in [docs/TIER_2_ENGINEERING_WHITEPAPER.md](docs/TIER_2_ENGINEERING_WHITEPAPER.md).
