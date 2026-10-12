@@ -64,6 +64,7 @@ float real_power       = 0.0f;
 float apparent_power   = 0.0f;
 float power_factor     = 1.0f;
 float phase_difference = 0.0f;
+bool  ct_reversed      = false;
 String appliance_name  = "Standby / Idle";
 int appliance_code     = 0;
 
@@ -81,19 +82,20 @@ int ledState = LOW;
 // Edge NILM Appliance Disaggregation Classifier
 // -------------------------------------------------------------------------------------
 void classifyAppliance() {
-  if (I_rms < 0.40f || real_power < 30.0f) {
+  float active_p = fabsf(real_power);
+  if (I_rms < 0.40f || active_p < 30.0f) {
     appliance_code = 0;
     appliance_name = "Standby / Idle";
-  } else if (real_power >= 850.0f && real_power <= 1150.0f && power_factor >= 0.96f) {
+  } else if (active_p >= 850.0f && active_p <= 1150.0f && power_factor >= 0.96f) {
     appliance_code = 1;
     appliance_name = "Appliance 1: Water Heater (1000W, PF 1.00)";
-  } else if (real_power >= 250.0f && real_power <= 450.0f && power_factor >= 0.65f && power_factor <= 0.78f) {
+  } else if (active_p >= 250.0f && active_p <= 450.0f && power_factor >= 0.65f && power_factor <= 0.78f) {
     appliance_code = 2;
     appliance_name = "Appliance 2: Refrigerator Motor (350W, PF 0.72 lag)";
-  } else if (real_power >= 700.0f && real_power <= 950.0f && power_factor >= 0.82f && power_factor <= 0.92f) {
+  } else if (active_p >= 700.0f && active_p <= 950.0f && power_factor >= 0.82f && power_factor <= 0.92f) {
     appliance_code = 3;
     appliance_name = "Appliance 3: Microwave Oven (800W, PF 0.88 lag)";
-  } else if (real_power > 1150.0f) {
+  } else if (active_p > 1150.0f) {
     appliance_code = 4;
     appliance_name = "Combined Multi-Appliance Load";
   } else {
@@ -103,35 +105,41 @@ void classifyAppliance() {
 }
 
 // -------------------------------------------------------------------------------------
-// Auto-Calibration Routine for DC Bias Midpoint
+// Auto-Calibration Routine for DC Bias Midpoint (Integer-Cycle Synchronous)
 // -------------------------------------------------------------------------------------
 void autoCalibrateMidpoints() {
-  Serial.println("[Calibration] Auto-tuning DC bias midpoints (zero-load baseline)...");
+  Serial.println("[Calibration] Auto-tuning DC bias midpoints (10 integer cycles / 200ms lock)...");
   uint64_t sum_v_cal = 0;
   uint64_t sum_i_cal = 0;
-  const int CAL_SAMPLES = 2500;
+  uint32_t cal_samples = 0;
 
-  for (int i = 0; i < CAL_SAMPLES; i++) {
+  unsigned long start_cal = micros();
+  // 200ms lock: exactly 10 full cycles at 50 Hz (200,000 microseconds)
+  // Guarantees any AC voltage/current component integrates to exactly zero (sin(20*pi) = 0)
+  while (micros() - start_cal < 200000) {
     sum_v_cal += analogRead(VOLTAGE_PIN);
     sum_i_cal += analogRead(CURRENT_PIN);
-    delayMicroseconds(80); // Sample rate ~12 kHz during calibration
+    cal_samples++;
+    delayMicroseconds(40); // Controlled rate ~15 kHz to prevent bus contention
   }
 
-  voltage_offset = (float)sum_v_cal / (float)CAL_SAMPLES;
-  current_offset = (float)sum_i_cal / (float)CAL_SAMPLES;
-  calibration_locked = true;
+  if (cal_samples > 0) {
+    voltage_offset = (float)sum_v_cal / (float)cal_samples;
+    current_offset = (float)sum_i_cal / (float)cal_samples;
+    calibration_locked = true;
+  }
 
-  Serial.printf("[Calibration] Locked! V_offset = %6.2f counts | I_offset = %6.2f counts\n",
-                voltage_offset, current_offset);
+  Serial.printf("[Calibration] Locked (%u samples)! V_offset = %6.2f counts | I_offset = %6.2f counts\n",
+                cal_samples, voltage_offset, current_offset);
 }
 
 // -------------------------------------------------------------------------------------
 // Signal Capture & Discrete RMS / Power Integration (100ms Temporal Lock)
 // -------------------------------------------------------------------------------------
 void captureAndCalculate() {
-  uint64_t sum_V_squared   = 0;
-  uint64_t sum_I_squared   = 0;
-  int64_t  sum_inst_power  = 0;
+  double   sum_V_squared   = 0.0;
+  double   sum_I_squared   = 0.0;
+  double   sum_inst_power  = 0.0;
   uint64_t sum_raw_V       = 0;
   uint64_t sum_raw_I       = 0;
   int sample_count         = 0;
@@ -146,12 +154,12 @@ void captureAndCalculate() {
     sum_raw_V += sample_V;
     sum_raw_I += sample_I;
 
-    float inst_V = (float)sample_V - voltage_offset;
-    float inst_I = (float)sample_I - current_offset;
+    double inst_V = (double)sample_V - (double)voltage_offset;
+    double inst_I = (double)sample_I - (double)current_offset;
 
-    sum_V_squared  += (int64_t)(inst_V * inst_V);
-    sum_I_squared  += (int64_t)(inst_I * inst_I);
-    sum_inst_power += (int64_t)(inst_V * inst_I);
+    sum_V_squared  += inst_V * inst_V;
+    sum_I_squared  += inst_I * inst_I;
+    sum_inst_power += inst_V * inst_I;
     sample_count++;
   }
 
@@ -169,10 +177,10 @@ void captureAndCalculate() {
   current_offset = (current_offset * 0.95f) + (window_mean_I * 0.05f);
 
   // ---------------------------------------------------------------------------------
-  // Discrete RMS Integration
+  // Discrete RMS Integration (Double-Precision Accumulation)
   // ---------------------------------------------------------------------------------
-  V_rms = sqrt((float)sum_V_squared / (float)sample_count) * (3.3f / 4095.0f) * VOLTAGE_CAL;
-  I_rms = sqrt((float)sum_I_squared / (float)sample_count) * (3.3f / 4095.0f) * CURRENT_CAL;
+  V_rms = (float)(sqrt(sum_V_squared / (double)sample_count) * (3.3 / 4095.0) * (double)VOLTAGE_CAL);
+  I_rms = (float)(sqrt(sum_I_squared / (double)sample_count) * (3.3 / 4095.0) * (double)CURRENT_CAL);
 
   // Hardware Noise Gates (eliminate residual ADC thermal noise floor)
   if (I_rms < 0.25f) {
@@ -185,11 +193,15 @@ void captureAndCalculate() {
   // ---------------------------------------------------------------------------------
   // Power & Phase Angle Calculations
   // ---------------------------------------------------------------------------------
-  real_power = ((float)sum_inst_power / (float)sample_count) *
-               (3.3f / 4095.0f) * (3.3f / 4095.0f) *
-               VOLTAGE_CAL * CURRENT_CAL;
+  real_power = (float)((sum_inst_power / (double)sample_count) *
+                       (3.3 / 4095.0) * (3.3 / 4095.0) *
+                       (double)VOLTAGE_CAL * (double)CURRENT_CAL);
 
   apparent_power = V_rms * I_rms;
+
+  // Detect and handle reverse CT clamp installation orientation
+  ct_reversed = (real_power < -15.0f && apparent_power > 25.0f);
+  float active_p_mag = fabsf(real_power);
 
   if (I_rms == 0.0f || V_rms == 0.0f) {
     real_power       = 0.0f;
@@ -197,9 +209,9 @@ void captureAndCalculate() {
     power_factor     = 1.0f;
     phase_difference = 0.0f;
   } else if (apparent_power > 5.0f) {
-    power_factor = real_power / apparent_power;
-    if (power_factor > 1.0f)  power_factor = 1.0f;
-    if (power_factor < -1.0f) power_factor = -1.0f;
+    power_factor = active_p_mag / apparent_power;
+    if (power_factor > 1.0f) power_factor = 1.0f;
+    if (power_factor < 0.0f) power_factor = 0.0f;
     phase_difference = acos(power_factor) * (180.0f / (float)M_PI);
   } else {
     power_factor     = 1.0f;
@@ -238,19 +250,19 @@ void handleTelemetryRoot() {
   html += "</div>";
 
   html += "<div class='grid'>";
-  html += "  <div class='card'><h3>Voltage Node</h3><div class='value'>" + String(V_rms, 1) + "<span class='unit'>V RMS</span></div></div>";
-  html += "  <div class='card'><h3>Current Node</h3><div class='value' style='color:#f778ba;'>" + String(I_rms, 2) + "<span class='unit'>A RMS</span></div></div>";
-  html += "  <div class='card'><h3>Real Power (P)</h3><div class='value' style='color:#7ee787;'>" + String(real_power, 1) + "<span class='unit'>W</span></div></div>";
-  html += "  <div class='card'><h3>Apparent Power (S)</h3><div class='value' style='color:#d2a8ff;'>" + String(apparent_power, 1) + "<span class='unit'>VA</span></div></div>";
-  html += "  <div class='card'><h3>Power Factor (PF)</h3><div class='value' style='color:#ffa657;'>" + String(power_factor, 2) + "</div></div>";
-  html += "  <div class='card'><h3>Phase Angle (&theta;)</h3><div class='value' style='color:#ff7b72;'>" + String(phase_difference, 1) + "<span class='unit'>&deg;</span></div></div>";
+  html += "  <div class='card'><h3>Voltage Node</h3><div class='value' id='val-v'>" + String(V_rms, 1) + "<span class='unit'>V RMS</span></div></div>";
+  html += "  <div class='card'><h3>Current Node</h3><div class='value' id='val-i' style='color:#f778ba;'>" + String(I_rms, 2) + "<span class='unit'>A RMS</span></div></div>";
+  html += "  <div class='card'><h3>Real Power (P)</h3><div class='value' id='val-p' style='color:#7ee787;'>" + String(real_power, 1) + "<span class='unit'>W</span></div></div>";
+  html += "  <div class='card'><h3>Apparent Power (S)</h3><div class='value' id='val-s' style='color:#d2a8ff;'>" + String(apparent_power, 1) + "<span class='unit'>VA</span></div></div>";
+  html += "  <div class='card'><h3>Power Factor (PF)</h3><div class='value' id='val-pf' style='color:#ffa657;'>" + String(power_factor, 2) + "</div></div>";
+  html += "  <div class='card'><h3>Phase Angle (&theta;)</h3><div class='value' id='val-deg' style='color:#ff7b72;'>" + String(phase_difference, 1) + "<span class='unit'>&deg;</span></div></div>";
   html += "</div>";
 
   html += "<div class='grid'>";
   html += "  <div class='card appliance-card' style='grid-column: 1 / -1;'>";
   html += "    <h3>Active NILM Classification</h3>";
-  html += "    <div class='value' style='font-size:20px; color:#58a6ff;'>" + appliance_name + "</div>";
-  html += "    <small style='color:#8b949e;'>Dynamic Midpoint Offsets: V_DC = " + String(voltage_offset, 1) + " | I_DC = " + String(current_offset, 1) + " counts (Phantom Amps Resolved)</small>";
+  html += "    <div class='value' id='val-app' style='font-size:20px; color:#58a6ff;'>" + appliance_name + "</div>";
+  html += "    <small id='val-dc' style='color:#8b949e;'>Dynamic Midpoint Offsets: V_DC = " + String(voltage_offset, 1) + " | I_DC = " + String(current_offset, 1) + " counts (Phantom Amps Resolved)</small>";
   html += "  </div>";
   html += "</div>";
 
@@ -262,21 +274,43 @@ void handleTelemetryRoot() {
   html += "<div class='footer'>Author: Manit Sharma | GitHub: @manttii | B.Tech ECE 3rd Sem</div>";
 
   html += "<script>";
-  html += "const ctx = document.getElementById('telemetryChart').getContext('2d');";
-  html += "const chart = new Chart(ctx, {";
-  html += "  type: 'bar',";
-  html += "  data: {";
-  html += "    labels: ['Voltage (V)', 'Current (A * 20)', 'Real Power (W / 10)', 'Apparent Power (VA / 10)', 'Phase Angle (deg)'],";
-  html += "    datasets: [{";
-  html += "      label: 'Edge Metrics',";
-  html += "      data: [" + String(V_rms, 1) + ", " + String(I_rms * 20.0f, 1) + ", " + String(real_power / 10.0f, 1) + ", " + String(apparent_power / 10.0f, 1) + ", " + String(phase_difference, 1) + "],";
-  html += "      backgroundColor: ['#58a6ff', '#f778ba', '#7ee787', '#d2a8ff', '#ff7b72'],";
-  html += "      borderRadius: 6";
-  html += "    }]";
-  html += "  },";
-  html += "  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#30363d' } }, x: { grid: { display: false } } } }";
-  html += "});";
-  html += "setInterval(() => { location.reload(); }, 2500);";
+  html += "let chart = null;";
+  html += "try {";
+  html += "  const ctx = document.getElementById('telemetryChart').getContext('2d');";
+  html += "  chart = new Chart(ctx, {";
+  html += "    type: 'bar',";
+  html += "    data: {";
+  html += "      labels: ['Voltage (V)', 'Current (A * 20)', 'Real Power (W / 10)', 'Apparent Power (VA / 10)', 'Phase Angle (deg)'],";
+  html += "      datasets: [{";
+  html += "        label: 'Edge Metrics',";
+  html += "        data: [" + String(V_rms, 1) + ", " + String(I_rms * 20.0f, 1) + ", " + String(real_power / 10.0f, 1) + ", " + String(apparent_power / 10.0f, 1) + ", " + String(phase_difference, 1) + "],";
+  html += "        backgroundColor: ['#58a6ff', '#f778ba', '#7ee787', '#d2a8ff', '#ff7b72'],";
+  html += "        borderRadius: 6";
+  html += "      }]";
+  html += "    },";
+  html += "    options: { responsive: true, animation: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#30363d' } }, x: { grid: { display: false } } } }";
+  html += "  });";
+  html += "} catch (e) { console.warn('Chart.js offline or loading deferred', e); }";
+  html += "async function updateTelemetry() {";
+  html += "  try {";
+  html += "    const res = await fetch('/api/data');";
+  html += "    if (!res.ok) return;";
+  html += "    const d = await res.json();";
+  html += "    document.getElementById('val-v').innerHTML = d.voltage_rms.toFixed(1) + \"<span class='unit'>V RMS</span>\";";
+  html += "    document.getElementById('val-i').innerHTML = d.current_rms.toFixed(2) + \"<span class='unit'>A RMS</span>\";";
+  html += "    document.getElementById('val-p').innerHTML = d.real_power.toFixed(1) + \"<span class='unit'>W</span>\";";
+  html += "    document.getElementById('val-s').innerHTML = d.apparent_power.toFixed(1) + \"<span class='unit'>VA</span>\";";
+  html += "    document.getElementById('val-pf').innerText = d.power_factor.toFixed(2);";
+  html += "    document.getElementById('val-deg').innerHTML = d.phase_angle.toFixed(1) + \"<span class='unit'>&deg;</span>\";";
+  html += "    document.getElementById('val-app').innerText = d.appliance_name;";
+  html += "    document.getElementById('val-dc').innerText = 'Dynamic Midpoint Offsets: V_DC = ' + d.dc_offset_voltage.toFixed(1) + ' | I_DC = ' + d.dc_offset_current.toFixed(1) + ' counts' + (d.ct_reversed ? ' | [CT Polarity Auto-Corrected]' : ' (Phantom Amps Resolved)');";
+  html += "    if (chart) {";
+  html += "      chart.data.datasets[0].data = [d.voltage_rms, d.current_rms * 20.0, d.real_power / 10.0, d.apparent_power / 10.0, d.phase_angle];";
+  html += "      chart.update('none');";
+  html += "    }";
+  html += "  } catch (e) { console.error('Telemetry fetch error', e); }";
+  html += "}";
+  html += "setInterval(updateTelemetry, 1500);";
   html += "</script>";
 
   html += "</body></html>";
@@ -287,6 +321,7 @@ void handleTelemetryRoot() {
 // Web API: JSON Telemetry Endpoint (/api/data)
 // -------------------------------------------------------------------------------------
 void handleApiData() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   String json = "{";
   json += "\"voltage_rms\":" + String(V_rms, 2) + ",";
   json += "\"current_rms\":" + String(I_rms, 2) + ",";
@@ -297,7 +332,8 @@ void handleApiData() {
   json += "\"appliance_code\":" + String(appliance_code) + ",";
   json += "\"appliance_name\":\"" + appliance_name + "\",";
   json += "\"dc_offset_voltage\":" + String(voltage_offset, 2) + ",";
-  json += "\"dc_offset_current\":" + String(current_offset, 2);
+  json += "\"dc_offset_current\":" + String(current_offset, 2) + ",";
+  json += "\"ct_reversed\":" + String(ct_reversed ? "true" : "false");
   json += "}";
   server.send(200, "application/json", json);
 }

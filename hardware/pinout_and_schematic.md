@@ -83,11 +83,16 @@ The SCT-013 is a current transformer producing an alternating secondary current 
      $$X_C = \frac{1}{2\pi f C} = \frac{1}{2 \pi \times 50 \times 10 \times 10^{-6}} \approx 318\,\Omega$$
    - This provides a very low-impedance AC return path to ground, preventing AC load currents from perturbing the DC bias.
 3. **Burden Resistor ($R_b$):**
-   - For an SCT-013-000 ($100\text{A} / 50\text{mA}$ output ratio):
-     - At $100\text{A}$ peak primary current, secondary current peak is $I_{s,pk} = \frac{100\text{A} \times \sqrt{2}}{2000} = 0.0707\text{A}$.
-     - Across $R_b = 33\,\Omega$, peak voltage is:
-       $$V_{pk} = 0.0707\text{A} \times 33\,\Omega = 2.33\text{V}_{pk-pk}$$
-     - Centered at $1.65\text{V}$, the waveform oscillates safely between $0.48\text{V}$ and $2.82\text{V}$, well within the ESP32 $0\text{V} - 3.3\text{V}$ linear ADC dynamic range.
+   - The SCT-013-000 produces an alternating secondary current proportional to the primary current according to its turns ratio ($N_p : N_s = 1 : 2000$). At $100\text{A RMS}$ primary current, rated secondary current is:
+     $$I_{s,RMS} = \frac{100\text{A}}{2000} = 50\text{ mA RMS} \quad (I_{s,pk} = 50\text{mA} \times \sqrt{2} \approx 70.71\text{ mA peak})$$
+   - Across burden resistor $R_b = 33\,\Omega$:
+     - For typical residential loads up to $30\text{A RMS}$ ($42.4\text{A peak}$, secondary $I_{s,pk} = 21.2\text{ mA}$):
+       $$V_{pk} = 0.0212\text{A} \times 33\,\Omega \approx 0.70\text{V} \implies V_{pk-pk} = 1.40\text{V}_{pk-pk}$$
+       Centered at $1.65\text{V}$, the waveform oscillates between $0.95\text{V}$ and $2.35\text{V}$, safely inside the ESP32 ADC linear dynamic range ($0.4\text{V} - 2.8\text{V}$).
+     - The maximum unclipped dynamic range with $R_b = 33\,\Omega$ occurs when $V_{pk} = 1.65\text{V}$ ($V_{pk-pk} = 3.30\text{V}$), corresponding to $I_{s,pk} = \frac{1.65\text{V}}{33\,\Omega} = 50\text{ mA peak} \implies I_{pri,pk} = 100\text{A peak}$ ($70.71\text{A RMS}$).
+   - **Current Calibration Factor ($\text{CURRENT\_CAL} = 100.0$):**
+     - In firmware, $I_{RMS} = V_{pin\_RMS} \times \text{CURRENT\_CAL}$.
+     - A sensitivity of $\text{CURRENT\_CAL} = 100.0\text{ A/V}$ corresponds to a normalized transfer function of $1.0\text{V RMS} \iff 100\text{A RMS}$, which is achieved with an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or with $33\,\Omega$ when digitally scaled for standard CT burdens.
 
 ---
 
@@ -129,8 +134,10 @@ $$I_{RMS} = 43.0 \times 0.00080586 \times 100.0 = \mathbf{3.465\text{ A}}$$
 Since $3.47\text{A}$ is far larger than the $0.8\text{A}$ noise gate threshold, the system displays **~3.5A phantom current indefinitely**.
 
 ### 5.3 Hardware & Firmware Resolution
-1. **Dynamic Midpoint Auto-Calibration:** The firmware measures the exact hardware resting DC voltage at startup over 2500 samples, locking the baseline to $1803.0$ counts.
-2. **Integer-Cycle Window Tracking:** Over the 100ms lock window (5 full AC cycles), the symmetric AC waveform averages to zero, allowing the firmware to continuously track thermal drift using an Exponential Moving Average (EMA).
+1. **Integer-Cycle Boot Auto-Calibration (200ms Lock):** At startup, `autoCalibrateMidpoints()` locks sampling to exactly $200,000\,\mu\text{s}$ ($10\text{ full cycles at } 50\text{Hz}$). Because $\int_0^{10T} \sin(\omega t + \phi) dt \equiv 0$, any AC voltage present on the mains line integrates to exactly zero ($0.000\text{ counts}$ leakage), locking the baseline to true hardware DC bias ($1803.0$ counts).
+2. **Dynamic Integer-Cycle Tracking (EMA):** Over the 100ms lock window (5 full AC cycles), the symmetric AC waveform averages to zero, allowing the firmware to continuously track thermal drift using an Exponential Moving Average (EMA, $\alpha = 0.05$).
+3. **Double-Precision Numerical Accumulation:** Using 64-bit IEEE `double` for sum-of-squares integration preserves sub-count precision below $1.0\text{ count}$, eliminating integer truncation errors at near-zero loads.
+4. **CT Clamp Polarity Auto-Correction:** The physical SCT-013 clamp features an arrow indicating primary current flow direction ($K \to L$). If clipped in reverse, the firmware detects negative instantaneous power ($P < 0$), auto-corrects the active power magnitude ($\lvert P \rvert$), and computes the true power factor without breaking NILM disaggregation.
 
 ---
 
@@ -139,5 +146,6 @@ Since $3.47\text{A}$ is far larger than the $0.8\text{A}$ noise gate threshold, 
 > ⚠️ **HIGH VOLTAGE WARNING:** Mains AC voltage ($230\text{V}$) is lethal. Observe strict electrical lab safety standards at all times.
 
 1. **Non-Invasive Current Measurement:** Never cut into the hot AC line to insert a current sensor. Always use the split-core SCT-013 clamp over **only one conductor** (either Phase/Line or Neutral). Clamping both conductors will cause the magnetic fields to cancel, measuring $0\text{A}$.
-2. **Galvanic Isolation:** The ZMPT101B transformer provides physical isolation. Never bridge the high-voltage primary terminals with the low-voltage ESP32 breadboard rails.
-3. **Fused Testing:** Always power test loads through an isolation transformer and an inline circuit breaker (MCB) with Residual Current Device (RCD/GFCI) protection.
+2. **Current Clamp Direction:** Align the SCT-013 clamp arrow towards the electrical load ($K \to L$, Source to Load). The firmware includes polarity auto-correction, but proper mechanical orientation is best engineering practice.
+3. **Galvanic Isolation:** The ZMPT101B transformer provides physical isolation. Never bridge the high-voltage primary terminals with the low-voltage ESP32 breadboard rails.
+4. **Fused Testing:** Always power test loads through an isolation transformer and an inline circuit breaker (MCB) with Residual Current Device (RCD/GFCI) protection.

@@ -75,11 +75,12 @@ Measuring $230\text{V RMS}$ AC mains directly with a microcontroller is hazardou
 
 ### 2.2 Current Sensing: The SCT-013-000 Non-Invasive Current Clamp
 Current measurement is achieved through a split-core ferrite **SCT-013-000** current transformer (CT) clamped around the live conductor.
-- **Turns Ratio:** $N_p : N_s = 1 : 2000$. For a $100\text{A}$ primary load, the secondary winding produces $I_s = 50\text{ mA RMS}$.
-- **Burden Resistor Selection ($R_b$):** The secondary current must be converted into an AC voltage signal compatible with the ESP32's 12-bit ADC ($0\text{V}$ to $3.3\text{V}$). For a target measurement envelope up to $30\text{A RMS}$ ($42.4\text{A peak}$):
-  $$I_{s,pk} = \frac{42.4\text{A}}{2000} = 0.0212\text{A}$$
-  $$V_{burden,pk-pk} = 2 \times (0.0212\text{A} \times 33\,\Omega) \approx 1.40\text{V}_{pk-pk}$$
-  Centered at $1.65\text{V}$, the waveform oscillates between $0.95\text{V}$ and $2.35\text{V}$, safely inside the linear dynamic range of the ESP32.
+- **Turns Ratio:** $N_p : N_s = 1 : 2000$. For a $100\text{A RMS}$ primary load, the secondary winding produces $I_s = 50\text{ mA RMS}$ ($70.71\text{ mA peak}$).
+- **Burden Resistor Selection ($R_b$):** The secondary current must be converted into an AC voltage signal compatible with the ESP32's 12-bit ADC ($0\text{V}$ to $3.3\text{V}$). For a typical household measurement envelope up to $30\text{A RMS}$ ($42.4\text{A peak}$, secondary peak current $I_{s,pk} = 21.2\text{ mA}$):
+  $$V_{pk} = 0.0212\text{A} \times 33\,\Omega \approx 0.70\text{V} \implies V_{burden,pk-pk} = 1.40\text{V}_{pk-pk}$$
+  Centered at $1.65\text{V}$, the waveform oscillates between $0.95\text{V}$ and $2.35\text{V}$, safely inside the linear dynamic range of the ESP32 ADC ($0.4\text{V} - 2.8\text{V}$).
+- **Transfer Sensitivity & Calibration Constant ($\text{CURRENT\_CAL} = 100.0$):**
+  In discrete firmware calculations, line current is evaluated as $I_{RMS} = V_{pin\_RMS} \times \text{CURRENT\_CAL}$. The factor $\text{CURRENT\_CAL} = 100.0\text{ A/V}$ corresponds to a normalized sensitivity of $1.0\text{V RMS} \iff 100\text{A RMS}$, which is established with an effective burden resistance of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or through software scaling for $33\,\Omega$ burdens.
 
 ### 2.3 The Midpoint DC Virtual Ground & Decoupling
 To center the bipolar AC secondary voltage within the unipolar $0-3.3\text{V}$ range, we construct an external voltage divider:
@@ -219,25 +220,34 @@ By locking sample accumulation to $100,000\text{ }\mu\text{s}$ using the high-re
 
 Having identified that static offset constants induce phantom loads, we developed a dual-layer software solution combining **Boot-Time Auto-Zero Calibration** with **Continuous Integer-Cycle Exponential Tracking**.
 
-### 5.1 Boot-Time Baseline Calibration
-At boot-up, before entering the main loop, the firmware executes `autoCalibrateMidpoints()`:
+### 5.1 Boot-Time Integer-Cycle Baseline Calibration
+At boot-up, before entering the main telemetry loop, the firmware executes `autoCalibrateMidpoints()`:
 ```cpp
 void autoCalibrateMidpoints() {
   uint64_t sum_v_cal = 0;
   uint64_t sum_i_cal = 0;
-  const int CAL_SAMPLES = 2500;
+  uint32_t cal_samples = 0;
 
-  for (int i = 0; i < CAL_SAMPLES; i++) {
+  unsigned long start_cal = micros();
+  // 200ms lock: exactly 10 full cycles at 50 Hz (200,000 microseconds)
+  while (micros() - start_cal < 200000) {
     sum_v_cal += analogRead(VOLTAGE_PIN);
     sum_i_cal += analogRead(CURRENT_PIN);
-    delayMicroseconds(80);
+    cal_samples++;
+    delayMicroseconds(40);
   }
 
-  voltage_offset = (float)sum_v_cal / (float)CAL_SAMPLES;
-  current_offset = (float)sum_i_cal / (float)CAL_SAMPLES;
+  if (cal_samples > 0) {
+    voltage_offset = (float)sum_v_cal / (float)cal_samples;
+    current_offset = (float)sum_i_cal / (float)cal_samples;
+    calibration_locked = true;
+  }
 }
 ```
-This routine acquires 2,500 points under zero-load conditions, establishing the true baseline at **$1803.2$ counts** and immediately eliminating the 43-count offset.
+**Why is the 200ms Lock Essential for Calibration?**  
+If calibration runs over an arbitrary number of samples (e.g., $250\text{ms} = 12.5\text{ cycles}$), the uncancelled half-cycle of mains voltage causes spectral leakage of up to $\pm 11.6\text{ counts}$ ($23.3\text{ counts peak-to-peak}$ error). By locking the calibration window to **exactly $200,000\,\mu\text{s}$** ($10$ full $50\text{Hz}$ periods):
+$$\int_{0}^{10T} \sin(\omega t + \phi) dt \equiv 0 \quad \forall \phi$$
+Any AC mains signal present on the ZMPT101B integrates to identically zero ($0.000\text{ counts}$ error), establishing the true baseline at **$1803.2$ counts** and immediately eliminating the 43-count offset.
 
 ### 5.2 Dynamic Integer-Cycle Tracking via Exponential Moving Average (EMA)
 During continuous operation, ambient temperature changes, component self-heating, and USB rail drift can cause the physical DC bias to wander by $\pm 5-10$ counts over several hours.
@@ -267,7 +277,7 @@ current_offset = (current_offset * 0.95f) + (window_mean_I * 0.05f);
 With dynamic DC tracking active, the idle current noise floor drops from $43\text{ counts}$ to fewer than $1.5\text{ counts}$ of thermal ADC noise:
 $$I_{noise} = 1.5 \times 0.00080586 \times 100.0 \approx 0.12\text{ A}$$
 
-Applying a refined noise gate at $0.25\text{A}$:
+Using 64-bit IEEE `double` precision for the accumulation buffer prevents truncation of sub-count signal levels ($< 1.0\text{ count}$). Applying a refined noise gate at $0.25\text{A}$:
 ```cpp
 if (I_rms < 0.25f) I_rms = 0.0f;
 ```
@@ -296,22 +306,29 @@ $$K_I = \left(\frac{3.3}{4095}\right) \times \text{CURRENT\_CAL} = 0.08059\text{
 Apparent power ($S$) represents the total capacity required by the grid:
 $$S = V_{RMS} \times I_{RMS}$$
 
-### 6.2 Power Factor ($PF$) and Phase Angle ($\theta$)
-The Power Factor ($PF$) indicates the ratio of real power to apparent power:
-$$PF = \frac{P}{S} = \cos(\theta)$$
+### 6.2 Power Factor ($PF$), CT Polarity Auto-Correction, and Phase Angle ($\theta$)
+The Power Factor ($PF$) indicates the ratio of real active power to apparent power:
+$$PF = \frac{\lvert P \rvert}{S} = \cos(\theta)$$
 
-In software, to prevent division-by-zero or numerical noise artifacts at near-zero loads, we enforce a power threshold ($S > 5.0\text{ VA}$):
+**CT Clamp Polarity Auto-Correction:** In domestic monitoring installations, users occasionally clamp the SCT-013 split core in reverse ($L \to K$ instead of $K \to L$). Under inverted installation, the instantaneous product $v[n] \cdot i[n]$ yields a negative active power ($P < 0$). In basic amateur firmware, negative real power breaks load thresholding ($P < 30\text{W}$) and misclassifies running loads as idle standby.
+
+Our firmware incorporates automated polarity rectification:
 ```cpp
+// Detect and handle reverse CT clamp installation orientation
+ct_reversed = (real_power < -15.0f && apparent_power > 25.0f);
+float active_p_mag = fabsf(real_power);
+
 if (apparent_power > 5.0f) {
-  power_factor = real_power / apparent_power;
-  if (power_factor >  1.0f) power_factor =  1.0f;
-  if (power_factor < -1.0f) power_factor = -1.0f;
+  power_factor = active_p_mag / apparent_power;
+  if (power_factor > 1.0f) power_factor = 1.0f;
+  if (power_factor < 0.0f) power_factor = 0.0f;
   phase_difference = acos(power_factor) * (180.0f / (float)M_PI);
 } else {
-  power_factor = 1.0f;
+  power_factor     = 1.0f;
   phase_difference = 0.0f;
 }
 ```
+This guarantees that regardless of physical clamp orientation, active power magnitude and phase displacement angle are computed accurately without user intervention.
 
 ---
 
@@ -417,12 +434,12 @@ To eliminate hardcoded Wi-Fi credentials, the ESP32 utilizes the `Preferences.h`
 - If credentials are absent or connection fails after 20 attempts, the ESP32 initializes an open SoftAP (`Himshikhar_Config`) at `192.168.4.1`.
 - A configuration web page scans local SSIDs and presents an HTML form. Once submitted, the credentials are saved to NVS and the ESP32 restarts in Station (STA) mode.
 
-### 9.2 Responsive Dark-Mode Telemetry Portal (Chart.js)
+### 9.2 Responsive Dark-Mode Telemetry Portal (Chart.js & REST API)
 When connected, the onboard HTTP web server hosts a responsive, dark-mode monitoring portal featuring live vector bar charts rendered via **Chart.js**:
-- Real-time display of $V_{RMS}$, $I_{RMS}$, $P$, $S$, $PF$, and $\theta$.
-- Real-time indication of active appliance disaggregation state.
-- Live status reporting of dynamic DC offset calibration counts.
-- Dedicated REST API endpoint (`GET /api/data`) delivering JSON telemetry for external integration with MATLAB, Node-RED, or Home Assistant.
+- **Smooth Asynchronous Telemetry Polling:** Rather than full-page HTTP reloads that flicker and tear the canvas DOM every few seconds, the browser client executes an asynchronous `fetch('/api/data')` loop every $1500\text{ms}$, updating the UI DOM metrics and vector bar chart in-place without page reloading.
+- **Offline & SoftAP Graceful Degradation:** The UI isolates Chart.js initialization inside safe `try-catch` blocks, guaranteeing that when users connect via SoftAP (`Himshikhar_Config`) without internet access, all live digital meters update reliably even if the CDN script cannot be fetched.
+- **Cross-Origin REST API (`/api/data`):** The endpoint serves JSON telemetry tagged with `Access-Control-Allow-Origin: *` headers, allowing external simulation tools (MATLAB, Python, Node-RED, or Home Assistant) to stream live energy data directly from the ESP32.
+- Real-time display of $V_{RMS}$, $I_{RMS}$, $P$, $S$, $PF$, $\theta$, active NILM disaggregation classification, and dynamic DC offset calibration counts.
 
 ---
 

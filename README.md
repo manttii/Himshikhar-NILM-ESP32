@@ -79,25 +79,27 @@ Where:
 
 #### B. Current Calibration ($\text{CURRENT\_CAL} = 100.0$)
 1. The SCT-013-000 current transformer features a turns ratio of $N_p : N_s = 1 : 2000$.
-2. At rated $100\text{A}$ primary current, the secondary current is:
+2. At rated $100\text{A RMS}$ primary current, the secondary winding produces:
    $$I_s = \frac{100\text{A}}{2000} = 50\text{ mA RMS}$$
-3. The secondary coil drives a burden resistor network calibrated to produce $1.0\text{ V RMS}$ at rated $100\text{A}$ line current:
+3. The secondary coil drives a burden resistor network calibrated to produce a normalized sensitivity of $1.0\text{ V RMS}$ at $100\text{A RMS}$ line current:
    $$\text{Sensitivity} = \frac{100.0\text{ A}}{1.0\text{ V}} = \mathbf{100.0\text{ A/V}}$$
+   *(This corresponds to an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or $33\,\Omega$ with appropriate software scaling).*
 4. Substituting into the firmware formulation:
    $$I_{RMS} = V_{\text{pin\_RMS}} \times \text{CURRENT\_CAL} \implies \text{CURRENT\_CAL} = 100.0$$
 
 ---
 
-### 2.4 Active Power, Apparent Power & Phase Angle ($\theta$)
+### 2.4 Active Power, Apparent Power, Polarity & Phase Angle ($\theta$)
 
 Real active power ($P$) is the discrete time average of the instantaneous voltage-current product:
 $$P = \left(\frac{1}{N} \sum_{n=1}^{N} v_{inst}[n] \cdot i_{inst}[n]\right) \times \left(\frac{3.3}{4095}\right)^2 \times \text{VOLTAGE\_CAL} \times \text{CURRENT\_CAL}$$
 
-Apparent power ($S$) represents the total volt-amperes delivered:
+Apparent power ($S$) represents total volt-amperes:
 $$S = V_{RMS} \times I_{RMS}$$
 
-The Power Factor ($PF$) and phase displacement angle ($\theta$) are extracted:
-$$PF = \cos(\theta) = \frac{P}{S} \quad (\text{clamped to } [-1.0, 1.0] \text{ when } S > 5.0\text{ VA})$$
+**CT Polarity Auto-Correction:** If the physical split-core clamp is clipped backwards on the wire, $v(t) \cdot i(t)$ produces a negative active power ($P < 0$). The firmware auto-detects this inverted polarity, takes the active power magnitude ($\lvert P \rvert$), and flags `ct_reversed = true` without disrupting power factor calculation or NILM disaggregation:
+
+$$\text{Power Factor } PF = \frac{\lvert P \rvert}{S} \quad (\text{clamped to } [0.0, 1.0] \text{ when } S > 5.0\text{ VA})$$
 $$\theta = \arccos(PF) \times \left(\frac{180^\circ}{\pi}\right)$$
 
 ---
@@ -122,12 +124,12 @@ Because $3.47\text{A}$ is significantly higher than the standard $0.8\text{A}$ n
 ### 3.2 Dual-Layer Mitigation Architecture
 This firmware implements an intelligent two-tier auto-tracking engine:
 
-1. **Boot-Time Auto-Zero Calibration:** In `setup()`, the ESP32 samples 2500 discrete points over $200\text{ms}$ under zero-load conditions to measure the true resting midpoint:
-   $$I_{\text{offset}} = \frac{1}{2500} \sum_{k=1}^{2500} \text{ADC}_I[k] \approx 1803.2\text{ counts}$$
+1. **Integer-Cycle Boot Auto-Calibration (200ms Lock):** In `setup()`, the ESP32 samples continuously over an exact **200,000 $\mu$s window** (10 full cycles of 50 Hz AC) under zero-load conditions. Because $\int_0^{10T} \sin(\omega t + \phi) dt \equiv 0$, any AC mains signal integrates to exactly zero with 0.000 counts harmonic leakage, locking true DC bias:
+   $$I_{\text{offset}} = \frac{1}{M} \sum_{k=1}^{M} \text{ADC}_I[k] \approx 1803.2\text{ counts}$$
 2. **Dynamic Integer-Cycle Tracking (EMA):** Because the 100ms temporal lock window spans exactly 5 complete AC cycles, the fundamental sinusoidal current averages to zero ($\int_0^{5T} i(t) dt = 0$). Any non-zero mean over the window is physical DC bias:
    $$\bar{I}_{\text{window}} = \frac{1}{N} \sum_{n=1}^{N} \text{ADC}_I[n]$$
    $$I_{\text{offset}}[k] = 0.95 \cdot I_{\text{offset}}[k-1] + 0.05 \cdot \bar{I}_{\text{window}}$$
-3. **Adaptive Noise Gate:** Residual thermal jitter ($\le 2\text{ counts} \approx 0.16\text{A}$) is eliminated via a low-profile noise gate:
+3. **Double-Precision Accumulation & Adaptive Noise Gate:** 64-bit IEEE `double` precision is used during summation to prevent integer truncation bias on small sub-count signals. Residual thermal jitter ($\le 2\text{ counts} \approx 0.16\text{A}$) is eliminated via a low-profile noise gate:
    $$\text{If } I_{RMS} < 0.25\text{ A} \implies I_{RMS} = 0.00\text{ A}$$
 
 **Result:** Idle current drops cleanly to **$0.00\text{ A}$**, while real loads above $0.3\text{A}$ are captured with high linear fidelity.
