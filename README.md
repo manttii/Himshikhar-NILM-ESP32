@@ -6,6 +6,7 @@
 [![Paper PDF](https://img.shields.io/badge/Paper-IEEE%20Transactions%20PDF-red.svg)](docs/Manit_Sharma_IEEE_Transactions_NILM_Paper.pdf)
 [![Status](https://img.shields.io/badge/Verification-100%25%20PASS-success.svg)](simulink/verify_nilm_model.m)
 [![Author](https://img.shields.io/badge/Author-Manit%20Sharma-purple.svg)](https://github.com/manttii)
+[![ORCID](https://img.shields.io/badge/ORCID-0009--0000--1988--6487-green.svg)](https://orcid.org/0009-0000-1988-6487)
 
 A high-accuracy, edge-computed **Non-Intrusive Load Monitoring (NILM)** Energy Meter engineered from discrete analog principles. This repository contains the complete C++ embedded firmware for ESP32, the MATLAB/Simulink digital twin simulation, circuit schematics, and mathematical derivations for AC phase angle resolution, temporal waveform locking, dynamic DC bias tracking, and appliance load disaggregation.
 
@@ -73,20 +74,29 @@ Where:
 1. Nominal grid voltage: $V_{\text{RMS}} = 230.0\text{ V}$ (peak value $V_{pk} = 230 \times \sqrt{2} \approx 325.27\text{ V}$).
 2. The ZMPT101B active module steps down the $230\text{V}$ AC signal through a micro transformer ($2\text{mA}:2\text{mA}$) and conditions it via an LM358 inverting amplifier.
 3. The feedback trimpot is adjusted to yield an AC voltage swing of $0.26028\text{ V RMS}$ ($0.736\text{ V peak-to-peak}$) around the $1.65\text{V}$ midpoint:
-   $$V_{\text{pin, RMS}} = 0.26028\text{ V}$$
+
+   $V_{\text{pin, RMS}} = 0.26028\text{ V}$
+
 4. Setting up the transfer relationship:
-   $$V_{\text{RMS}} = V_{\text{pin, RMS}} \times K_V \implies 230.0 = 0.26028 \times K_V$$
-   $$K_V = \frac{230.0}{0.26028} = \mathbf{883.58}$$
+
+   $V_{\text{RMS}} = V_{\text{pin, RMS}} \times K_V \implies 230.0 = 0.26028 \times K_V$
+
+   $K_V = \frac{230.0}{0.26028} = \mathbf{883.58}$
 
 #### B. Current Calibration (`CURRENT_CAL` = 100.0)
 1. The SCT-013-000 current transformer features a turns ratio of $N_p : N_s = 1 : 2000$.
 2. At rated $100\text{A RMS}$ primary current, the secondary winding produces:
-   $$I_s = \frac{100\text{A}}{2000} = 50\text{ mA RMS}$$
+
+   $I_s = \frac{100\text{A}}{2000} = 50\text{ mA RMS}$
+
 3. The secondary coil drives a burden resistor network calibrated to produce a normalized sensitivity of $1.0\text{ V RMS}$ at $100\text{A RMS}$ line current:
-   $$\text{Sensitivity} = \frac{100.0\text{ A}}{1.0\text{ V}} = \mathbf{100.0\text{ A/V}}$$
+
+   $\text{Sensitivity} = \frac{100.0\text{ A}}{1.0\text{ V}} = \mathbf{100.0\text{ A/V}}$
+
    *(This corresponds to an effective burden of $R_b = \frac{1.0\text{V}}{0.050\text{A}} = 20.0\,\Omega$, or $33\,\Omega$ with appropriate software scaling).*
 4. Substituting into the firmware formulation:
-   $$I_{\text{RMS}} = V_{\text{pin, RMS}} \times K_I \implies K_I = 100.0$$
+
+   $I_{\text{RMS}} = V_{\text{pin, RMS}} \times K_I \implies K_I = 100.0$
 
 ---
 
@@ -125,13 +135,19 @@ Because $3.47\text{A}$ is significantly higher than the standard $0.8\text{A}$ n
 ### 3.2 Dual-Layer Mitigation Architecture
 This firmware implements an intelligent two-tier auto-tracking engine:
 
-1. **Integer-Cycle Boot Auto-Calibration (200ms Lock):** In `setup()`, the ESP32 samples continuously over an exact **200,000 $\mu$s window** (10 full cycles of 50 Hz AC) under zero-load conditions. Because $\int_0^{10T} \sin(\omega t + \phi) dt \equiv 0$, any AC mains signal integrates to exactly zero with 0.000 counts harmonic leakage, locking true DC bias:
-   $$I_{\text{offset}} = \frac{1}{M} \sum_{k=1}^{M} \text{ADC}_I[k] \approx 1803.2\text{ counts}$$
-2. **Dynamic Integer-Cycle Tracking (EMA):** Because the 100ms temporal lock window spans exactly 5 complete AC cycles, the fundamental sinusoidal current averages to zero ($\int_0^{5T} i(t) dt = 0$). Any non-zero mean over the window is physical DC bias:
-   $$\bar{I}_{\text{window}} = \frac{1}{N} \sum_{n=1}^{N} \text{ADC}_I[n]$$
-   $$I_{\text{offset}}[k] = 0.95 \cdot I_{\text{offset}}[k-1] + 0.05 \cdot \bar{I}_{\text{window}}$$
+1. **Integer-Cycle Boot Auto-Calibration (200ms Lock):** In `setup()`, the ESP32 samples continuously over an exact **$200,000\text{ }\mu\text{s}$ window** ($10$ full cycles of $50\text{ Hz}$ AC) under zero-load conditions. Because $\int_0^{10T} \sin(\omega t + \phi) dt \equiv 0$, any AC mains signal integrates to exactly zero with $0.000$ counts harmonic leakage, locking true DC bias:
+
+   $I_{\text{offset}} = \frac{1}{M} \sum_{k=1}^{M} \text{ADC}_I[k] \approx 1803.2\text{ counts}$
+
+2. **Dynamic Integer-Cycle Tracking (EMA):** Because the $100\text{ ms}$ temporal lock window spans exactly $5$ complete AC cycles, the fundamental sinusoidal current averages to zero ($\int_0^{5T} i(t) dt = 0$). Any non-zero mean over the window represents physical DC bias, updated recursively:
+
+   $\bar{I}_{\text{window}} = \frac{1}{N} \sum_{n=1}^{N} \text{ADC}_I[n]$
+
+   $I_{\text{offset}}[k] = 0.95 \cdot I_{\text{offset}}[k-1] + 0.05 \cdot \bar{I}_{\text{window}}$
+
 3. **Double-Precision Accumulation & Adaptive Noise Gate:** 64-bit IEEE `double` precision is used during summation to prevent integer truncation bias on small sub-count signals. Residual thermal jitter ($\le 2\text{ counts} \approx 0.16\text{A}$) is eliminated via a low-profile noise gate:
-   $$\text{If } I_{RMS} < 0.25\text{ A} \implies I_{RMS} = 0.00\text{ A}$$
+
+   $\text{If } I_{RMS} < 0.25\text{ A} \implies I_{RMS} = 0.00\text{ A}$
 
 **Result:** Idle current drops cleanly to **$0.00\text{ A}$**, while real loads above $0.3\text{A}$ are captured with high linear fidelity.
 
@@ -222,6 +238,7 @@ Refer to [hardware/pinout_and_schematic.md](hardware/pinout_and_schematic.md) fo
 ## 7. Author & Academic Context
 
 - **Author:** Manit Sharma ([@manttii](https://github.com/manttii))
+- **ORCID:** [0009-0000-1988-6487](https://orcid.org/0009-0000-1988-6487)
 - **Program:** B.Tech Electronics & Communication Engineering (ECE), 3rd Semester
 - **Institution:** Graphic Era Deemed to be University, Dehradun, India
 - **Academic Research Paper:** Formatted in IEEE Transactions layout, available in Markdown at [docs/NILM_ACADEMIC_RESEARCH_PAPER.md](docs/NILM_ACADEMIC_RESEARCH_PAPER.md) and as a compiled publication-ready PDF at [docs/Manit_Sharma_IEEE_Transactions_NILM_Paper.pdf](docs/Manit_Sharma_IEEE_Transactions_NILM_Paper.pdf).
