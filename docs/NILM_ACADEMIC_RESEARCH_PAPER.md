@@ -1,3 +1,20 @@
+<!--
+================================================================================
+EDITORIAL NOTE ON PEER-REVIEW CONFIGURATION:
+- Single-Blind Review (Standard for IEEE Transactions on Smart Grid, 
+  IEEE Transactions on Consumer Electronics, and IEEE Access):
+  The title block below includes full author identity, institutional affiliation, 
+  and open-source repository link as required by IEEE Transactions journals.
+
+- Double-Blind Review (If submitting to double-blind IEEE conference tracks, 
+  e.g., IEEE GLOBECOM, IEEE WF-IoT initial round):
+  Replace the author block below with:
+    **Anonymous Author(s)**
+    *Affiliation Withheld for Double-Blind Peer Review*
+  and replace GitHub links with an anonymized repository link (e.g., Anonymous GitHub).
+================================================================================
+-->
+
 # Non-Intrusive Load Monitoring Under Low-Frequency Smart Meter Constraints: A Synthesized 2025–2026 Multi-Model Benchmark and Edge-Computed Sub-Cycle Resolution on ESP32
 
 **Manit Sharma**, *Student Member, IEEE*  
@@ -487,7 +504,7 @@ The Himshikhar ESP32 sub-cycle architecture directly resolves this conundrum by 
    $$
 
    Normalizing active and reactive power by $V_{\text{RMS}}^2$ decouples appliance identification from grid voltage sags and surges, stabilizing classification across extreme supply swings ($160\text{--}270\text{ V}$).
-3. **Event-Driven Telemetry Compression:** Rather than streaming raw high-frequency waveforms to the cloud, the edge device executes the FSM classifier locally and transmits compact JSON event payloads (e.g., `{"ts":1741258930,"app":"Heater","state":"ON","P":980,"PF":1.00}`) over MQTT/REST only upon detected state transitions.
+3. **Event-Driven Telemetry Compression:** Rather than streaming raw high-frequency waveforms to the cloud, the edge device executes the FSM classifier locally and transmits compact JSON event payloads (e.g., `{"ts": 174125..., "app": "Heater", "state": "ON", "P": 980, "PF": 1.00}`) over MQTT/REST only upon detected state transitions.
 
 This hybrid approach reduces uplink cellular bandwidth by over $99.8\%$ while providing sub-cycle classification fidelity matching high-frequency laboratory environments.
 

@@ -185,7 +185,7 @@ p:first-of-type, .no-indent {
     overflow-x: hidden;
 }
 
-/* Figures */
+/* Figures & Captions */
 img {
     max-width: 100%;
     height: auto;
@@ -193,7 +193,7 @@ img {
     margin: 6px auto;
 }
 
-em {
+p > em:only-child, .caption {
     font-size: 8pt;
     line-height: 1.15;
     display: block;
@@ -201,6 +201,11 @@ em {
     margin-top: 2px;
     margin-bottom: 8px;
     color: #222;
+}
+
+em {
+    font-style: italic;
+    display: inline;
 }
 
 /* Tables */
@@ -235,12 +240,22 @@ ol {
     padding-left: 16px;
     margin: 6px 0;
     font-size: 8pt;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 ol li {
-    margin-bottom: 4px;
+    margin-bottom: 4.5px;
     text-align: justify;
+    break-inside: avoid;
+}
+
+ol li em {
+    display: inline !important;
+    font-style: italic;
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0;
+    color: inherit;
 }
 
 hr {

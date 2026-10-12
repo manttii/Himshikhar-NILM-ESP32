@@ -111,7 +111,7 @@ p:first-of-type, .no-indent {
     overflow-x: hidden;
 }
 
-/* Figures */
+/* Figures & Captions */
 img {
     max-width: 100%;
     height: auto;
@@ -119,7 +119,7 @@ img {
     margin: 6px auto;
 }
 
-em {
+p > em:only-child, .caption {
     font-size: 8pt;
     line-height: 1.15;
     display: block;
@@ -127,6 +127,11 @@ em {
     margin-top: 2px;
     margin-bottom: 8px;
     color: #222;
+}
+
+em {
+    font-style: italic;
+    display: inline;
 }
 
 /* Tables */
@@ -161,12 +166,22 @@ ol {
     padding-left: 16px;
     margin: 6px 0;
     font-size: 8pt;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 ol li {
-    margin-bottom: 4px;
+    margin-bottom: 4.5px;
     text-align: justify;
+    break-inside: avoid;
+}
+
+ol li em {
+    display: inline !important;
+    font-style: italic;
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0;
+    color: inherit;
 }
 
 hr {
@@ -178,6 +193,23 @@ hr {
 <body>
 
 <div class="ieee-columns">
+<!--
+================================================================================
+EDITORIAL NOTE ON PEER-REVIEW CONFIGURATION:
+- Single-Blind Review (Standard for IEEE Transactions on Smart Grid, 
+  IEEE Transactions on Consumer Electronics, and IEEE Access):
+  The title block below includes full author identity, institutional affiliation, 
+  and open-source repository link as required by IEEE Transactions journals.
+
+- Double-Blind Review (If submitting to double-blind IEEE conference tracks, 
+  e.g., IEEE GLOBECOM, IEEE WF-IoT initial round):
+  Replace the author block below with:
+    **Anonymous Author(s)**
+    *Affiliation Withheld for Double-Blind Peer Review*
+  and replace GitHub links with an anonymized repository link (e.g., Anonymous GitHub).
+================================================================================
+-->
+
 <h1>Non-Intrusive Load Monitoring Under Low-Frequency Smart Meter Constraints: A Synthesized 2025–2026 Multi-Model Benchmark and Edge-Computed Sub-Cycle Resolution on ESP32</h1>
 <p><strong>Manit Sharma</strong>, <em>Student Member, IEEE</em><br />
 <em>Department of Electronics &amp; Communication Engineering (ECE)</em><br />
@@ -1638,7 +1670,7 @@ hr {
 <div class="display-eq">$$G(t) = \frac{P_{\text{real}}(t)}{V_{\text{RMS}}(t)^2}, \quad B(t) = \frac{Q(t)}{V_{\text{RMS}}(t)^2} \tag{16}$$</div>
 
 <p>Normalizing active and reactive power by \(V_{\text{RMS}}^2\) decouples appliance identification from grid voltage sags and surges, stabilizing classification across extreme supply swings (\(160\text{--}270\text{ V}\)).
-3. <strong>Event-Driven Telemetry Compression:</strong> Rather than streaming raw high-frequency waveforms to the cloud, the edge device executes the FSM classifier locally and transmits compact JSON event payloads (e.g., <code>{"ts":1741258930,"app":"Heater","state":"ON","P":980,"PF":1.00}</code>) over MQTT/REST only upon detected state transitions.</p>
+3. <strong>Event-Driven Telemetry Compression:</strong> Rather than streaming raw high-frequency waveforms to the cloud, the edge device executes the FSM classifier locally and transmits compact JSON event payloads (e.g., <code>{"ts": 174125..., "app": "Heater", "state": "ON", "P": 980, "PF": 1.00}</code>) over MQTT/REST only upon detected state transitions.</p>
 <p>This hybrid approach reduces uplink cellular bandwidth by over \(99.8\%\) while providing sub-cycle classification fidelity matching high-frequency laboratory environments.</p>
 <hr />
 <h2>6. Discussion, TinyML Deployment &amp; Metrological Limitations</h2>
