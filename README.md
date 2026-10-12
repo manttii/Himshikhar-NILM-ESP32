@@ -3,6 +3,7 @@
 [![ESP32](https://img.shields.io/badge/Hardware-ESP32--WROOM--32-blue.svg)](https://www.espressif.com/)
 [![MATLAB/Simulink](https://img.shields.io/badge/Digital%20Twin-MATLAB%2FSimulink%20R2026a-orange.svg)](https://www.mathworks.com/)
 [![Firmware](https://img.shields.io/badge/Firmware-C%2B%2B%20Arduino-brightgreen.svg)](firmware/esp32_nilm_meter.ino)
+[![Paper PDF](https://img.shields.io/badge/Paper-IEEE%20Transactions%20PDF-red.svg)](docs/Manit_Sharma_IEEE_Transactions_NILM_Paper.pdf)
 [![Status](https://img.shields.io/badge/Verification-100%25%20PASS-success.svg)](simulink/verify_nilm_model.m)
 [![Author](https://img.shields.io/badge/Author-Manit%20Sharma-purple.svg)](https://github.com/manttii)
 
@@ -223,5 +224,5 @@ Refer to [hardware/pinout_and_schematic.md](hardware/pinout_and_schematic.md) fo
 - **Author:** Manit Sharma ([@manttii](https://github.com/manttii))
 - **Program:** B.Tech Electronics & Communication Engineering (ECE), 3rd Semester
 - **Institution:** Graphic Era Deemed to be University, Dehradun, India
-- **Academic Research Paper:** Available in [docs/NILM_ACADEMIC_RESEARCH_PAPER.md](docs/NILM_ACADEMIC_RESEARCH_PAPER.md).
+- **Academic Research Paper:** Formatted in IEEE Transactions layout, available in Markdown at [docs/NILM_ACADEMIC_RESEARCH_PAPER.md](docs/NILM_ACADEMIC_RESEARCH_PAPER.md) and as a compiled publication-ready PDF at [docs/Manit_Sharma_IEEE_Transactions_NILM_Paper.pdf](docs/Manit_Sharma_IEEE_Transactions_NILM_Paper.pdf).
 - **Tier 2 Engineering Whitepaper:** Available in [docs/TIER_2_ENGINEERING_WHITEPAPER.md](docs/TIER_2_ENGINEERING_WHITEPAPER.md).
