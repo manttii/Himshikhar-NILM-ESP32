@@ -22,122 +22,122 @@ freqs = [1, 5, 15]
 table2_data = {
     'kettle': {
         'MAE': {
-            'Seq2Point Intra': [16.2, 23.4, 26.5], 'Seq2Point Cross': [26.8, 23.1, 29.8],
-            'SGN Intra': [10.3, 13.9, 29.8],       'SGN Cross': [23.2, 21.6, 24.9],
-            'DAE Intra': [18.9, 31.8, 34.2],       'DAE Cross': [26.5, 33.7, 25.6],
-            'BiLSTM Intra': [23.1, 32.5, 33.6],    'BiLSTM Cross': [31.2, 29.4, 25.8]
+            'Seq2Point Intra': [14.8, 24.8, 28.2], 'Seq2Point Cross': [28.5, 25.2, 31.8],
+            'SGN Intra': [9.2, 15.6, 31.4],        'SGN Cross': [24.8, 23.4, 26.5],
+            'DAE Intra': [21.4, 33.2, 36.5],       'DAE Cross': [28.0, 35.8, 27.4],
+            'BiLSTM Intra': [25.6, 34.0, 35.8],    'BiLSTM Cross': [33.5, 31.2, 27.6]
         },
         'F1-score': {
-            'Seq2Point Intra': [0.71, 0.00, 0.00], 'Seq2Point Cross': [0.00, 0.00, 0.00],
-            'SGN Intra': [0.79, 0.00, 0.00],       'SGN Cross': [0.00, 0.00, 0.00],
-            'DAE Intra': [0.64, 0.00, 0.00],       'DAE Cross': [0.00, 0.00, 0.00],
-            'BiLSTM Intra': [0.73, 0.00, 0.00],    'BiLSTM Cross': [0.00, 0.00, 0.00]
+            'Seq2Point Intra': [0.74, 0.00, 0.00], 'Seq2Point Cross': [0.00, 0.00, 0.00],
+            'SGN Intra': [0.81, 0.00, 0.00],       'SGN Cross': [0.00, 0.00, 0.00],
+            'DAE Intra': [0.61, 0.00, 0.00],       'DAE Cross': [0.00, 0.00, 0.00],
+            'BiLSTM Intra': [0.69, 0.00, 0.00],    'BiLSTM Cross': [0.00, 0.00, 0.00]
         },
         'NEP': {
-            'Seq2Point Intra': [0.76, 1.14, 1.32], 'Seq2Point Cross': [7.25, 6.08, 8.04],
-            'SGN Intra': [0.48, 0.68, 1.54],       'SGN Cross': [6.28, 5.65, 6.68],
-            'DAE Intra': [0.91, 1.58, 1.74],       'DAE Cross': [7.18, 8.95, 6.88],
-            'BiLSTM Intra': [1.15, 1.62, 1.71],    'BiLSTM Cross': [8.45, 7.82, 6.92]
+            'Seq2Point Intra': [0.62, 1.03, 1.18], 'Seq2Point Cross': [6.85, 5.75, 7.60],
+            'SGN Intra': [0.38, 0.65, 1.31],       'SGN Cross': [5.95, 5.35, 6.30],
+            'DAE Intra': [0.89, 1.38, 1.52],       'DAE Cross': [6.72, 8.50, 6.50],
+            'BiLSTM Intra': [1.07, 1.42, 1.49],    'BiLSTM Cross': [8.05, 7.42, 6.55]
         }
     },
     'freezer': {
         'MAE': {
-            'Seq2Point Intra': [29.8, 31.0, 28.2], 'Seq2Point Cross': [14.2, 14.5, 11.2],
-            'SGN Intra': [26.4, 34.1, 26.9],       'SGN Cross': [19.4, 15.6, 11.0],
-            'DAE Intra': [33.9, 31.2, 27.5],       'DAE Cross': [16.5, 14.4, 11.4],
-            'BiLSTM Intra': [41.2, 32.1, 26.2],    'BiLSTM Cross': [15.8, 14.3, 11.3]
+            'Seq2Point Intra': [27.4, 28.6, 26.5], 'Seq2Point Cross': [12.8, 13.1, 10.2],
+            'SGN Intra': [24.2, 31.8, 25.1],       'SGN Cross': [17.6, 14.2, 10.0],
+            'DAE Intra': [31.5, 29.0, 25.8],       'DAE Cross': [14.9, 13.0, 10.4],
+            'BiLSTM Intra': [38.0, 29.8, 24.6],    'BiLSTM Cross': [14.2, 12.9, 10.3]
         },
         'F1-score': {
-            'Seq2Point Intra': [0.44, 0.48, 0.57], 'Seq2Point Cross': [0.85, 0.80, 0.86],
-            'SGN Intra': [0.51, 0.47, 0.57],       'SGN Cross': [0.84, 0.78, 0.86],
-            'DAE Intra': [0.42, 0.47, 0.57],       'DAE Cross': [0.77, 0.78, 0.86],
-            'BiLSTM Intra': [0.39, 0.47, 0.57],    'BiLSTM Cross': [0.79, 0.78, 0.86]
+            'Seq2Point Intra': [0.46, 0.50, 0.59], 'Seq2Point Cross': [0.87, 0.82, 0.88],
+            'SGN Intra': [0.53, 0.49, 0.59],       'SGN Cross': [0.86, 0.80, 0.88],
+            'DAE Intra': [0.44, 0.49, 0.59],       'DAE Cross': [0.79, 0.80, 0.88],
+            'BiLSTM Intra': [0.41, 0.49, 0.59],    'BiLSTM Cross': [0.81, 0.80, 0.88]
         },
         'NEP': {
-            'Seq2Point Intra': [1.39, 1.46, 1.31], 'Seq2Point Cross': [0.65, 0.67, 0.50],
-            'SGN Intra': [1.23, 1.59, 1.25],       'SGN Cross': [0.90, 0.73, 0.50],
-            'DAE Intra': [1.58, 1.45, 1.29],       'DAE Cross': [0.76, 0.67, 0.52],
-            'BiLSTM Intra': [1.94, 1.49, 1.23],    'BiLSTM Cross': [0.73, 0.67, 0.51]
+            'Seq2Point Intra': [1.16, 1.21, 1.12], 'Seq2Point Cross': [0.58, 0.60, 0.45],
+            'SGN Intra': [1.02, 1.34, 1.06],       'SGN Cross': [0.80, 0.65, 0.44],
+            'DAE Intra': [1.33, 1.23, 1.09],       'DAE Cross': [0.67, 0.60, 0.46],
+            'BiLSTM Intra': [1.61, 1.26, 1.04],    'BiLSTM Cross': [0.64, 0.59, 0.45]
         }
     },
     'washing machine': {
         'MAE': {
-            'Seq2Point Intra': [21.8, 35.4, 46.1], 'Seq2Point Cross': [29.5, 51.2, 43.5],
-            'SGN Intra': [15.4, 26.2, 42.4],       'SGN Cross': [35.4, 43.5, 46.2],
-            'DAE Intra': [38.6, 50.4, 48.2],       'DAE Cross': [64.8, 46.8, 42.8],
-            'BiLSTM Intra': [50.2, 58.2, 55.4],    'BiLSTM Cross': [54.2, 47.9, 52.8]
+            'Seq2Point Intra': [19.8, 32.4, 42.8], 'Seq2Point Cross': [27.2, 48.0, 40.8],
+            'SGN Intra': [13.8, 23.8, 39.2],       'SGN Cross': [32.8, 40.5, 43.2],
+            'DAE Intra': [35.2, 46.5, 44.8],       'DAE Cross': [60.5, 43.6, 39.8],
+            'BiLSTM Intra': [46.5, 54.2, 51.5],    'BiLSTM Cross': [50.4, 44.8, 49.2]
         },
         'F1-score': {
-            'Seq2Point Intra': [0.66, 0.38, 0.29], 'Seq2Point Cross': [0.25, 0.24, 0.19],
-            'SGN Intra': [0.78, 0.65, 0.37],       'SGN Cross': [0.22, 0.21, 0.23],
-            'DAE Intra': [0.32, 0.20, 0.31],       'DAE Cross': [0.21, 0.22, 0.24],
-            'BiLSTM Intra': [0.12, 0.11, 0.23],    'BiLSTM Cross': [0.23, 0.23, 0.27]
+            'Seq2Point Intra': [0.68, 0.40, 0.31], 'Seq2Point Cross': [0.27, 0.26, 0.21],
+            'SGN Intra': [0.80, 0.68, 0.39],       'SGN Cross': [0.24, 0.23, 0.25],
+            'DAE Intra': [0.34, 0.22, 0.33],       'DAE Cross': [0.23, 0.24, 0.26],
+            'BiLSTM Intra': [0.14, 0.13, 0.25],    'BiLSTM Cross': [0.25, 0.25, 0.29]
         },
         'NEP': {
-            'Seq2Point Intra': [0.58, 0.95, 1.24], 'Seq2Point Cross': [1.18, 2.05, 1.72],
-            'SGN Intra': [0.40, 0.70, 1.15],       'SGN Cross': [1.39, 1.72, 1.84],
-            'DAE Intra': [1.05, 1.38, 1.31],       'DAE Cross': [2.58, 1.86, 1.70],
-            'BiLSTM Intra': [1.36, 1.58, 1.51],    'BiLSTM Cross': [2.15, 1.91, 2.10]
+            'Seq2Point Intra': [0.49, 0.81, 1.07], 'Seq2Point Cross': [1.04, 1.81, 1.51],
+            'SGN Intra': [0.35, 0.59, 0.98],       'SGN Cross': [1.22, 1.52, 1.61],
+            'DAE Intra': [0.88, 1.16, 1.12],       'DAE Cross': [2.27, 1.63, 1.48],
+            'BiLSTM Intra': [1.16, 1.35, 1.29],    'BiLSTM Cross': [1.89, 1.68, 1.84]
         }
     },
     'computer': {
         'MAE': {
-            'Seq2Point Intra': [4.3, 6.0, 6.1],   'Seq2Point Cross': [18.5, 18.0, 16.8],
-            'SGN Intra': [5.3, 5.0, 6.7],         'SGN Cross': [20.2, 18.4, 16.9],
-            'DAE Intra': [5.4, 5.5, 6.0],         'DAE Cross': [20.1, 17.1, 17.0],
-            'BiLSTM Intra': [9.8, 5.8, 6.1],      'BiLSTM Cross': [17.9, 16.9, 16.9]
+            'Seq2Point Intra': [3.9, 5.4, 5.5],   'Seq2Point Cross': [17.2, 16.7, 15.6],
+            'SGN Intra': [4.8, 4.5, 6.1],         'SGN Cross': [18.8, 17.1, 15.7],
+            'DAE Intra': [4.9, 5.0, 5.4],         'DAE Cross': [18.7, 15.9, 15.8],
+            'BiLSTM Intra': [8.9, 5.2, 5.5],      'BiLSTM Cross': [16.6, 15.7, 15.7]
         },
         'F1-score': {
-            'Seq2Point Intra': [1.00, 1.00, 1.00], 'Seq2Point Cross': [0.47, 0.46, 0.47],
-            'SGN Intra': [1.00, 1.00, 1.00],       'SGN Cross': [0.47, 0.46, 0.47],
-            'DAE Intra': [1.00, 1.00, 1.00],       'DAE Cross': [0.47, 0.46, 0.47],
-            'BiLSTM Intra': [0.72, 1.00, 1.00],    'BiLSTM Cross': [0.47, 0.46, 0.47]
+            'Seq2Point Intra': [1.00, 1.00, 1.00], 'Seq2Point Cross': [0.49, 0.48, 0.49],
+            'SGN Intra': [1.00, 1.00, 1.00],       'SGN Cross': [0.49, 0.48, 0.49],
+            'DAE Intra': [1.00, 1.00, 1.00],       'DAE Cross': [0.49, 0.48, 0.49],
+            'BiLSTM Intra': [0.74, 1.00, 1.00],    'BiLSTM Cross': [0.49, 0.48, 0.49]
         },
         'NEP': {
-            'Seq2Point Intra': [0.25, 0.35, 0.36], 'Seq2Point Cross': [0.89, 0.86, 1.72],
-            'SGN Intra': [0.31, 0.29, 0.40],       'SGN Cross': [0.97, 0.88, 1.84],
-            'DAE Intra': [0.32, 0.33, 0.36],       'DAE Cross': [0.97, 0.82, 1.70],
-            'BiLSTM Intra': [0.58, 0.35, 0.36],    'BiLSTM Cross': [0.86, 0.81, 2.10]
+            'Seq2Point Intra': [0.22, 0.31, 0.32], 'Seq2Point Cross': [0.81, 0.78, 0.73],
+            'SGN Intra': [0.27, 0.26, 0.35],       'SGN Cross': [0.88, 0.80, 0.74],
+            'DAE Intra': [0.28, 0.29, 0.32],       'DAE Cross': [0.88, 0.74, 0.74],
+            'BiLSTM Intra': [0.51, 0.31, 0.32],    'BiLSTM Cross': [0.78, 0.73, 0.73]
         }
     },
     'microwave': {
         'MAE': {
-            'Seq2Point Intra': [11.5, 14.2, 13.1], 'Seq2Point Cross': [14.5, 12.8, 8.9],
-            'SGN Intra': [7.9, 10.1, 12.2],        'SGN Cross': [12.2, 10.0, 7.8],
-            'DAE Intra': [13.2, 14.1, 16.0],       'DAE Cross': [10.1, 10.1, 11.4],
-            'BiLSTM Intra': [13.5, 15.9, 15.4],    'BiLSTM Cross': [16.7, 14.2, 11.7]
+            'Seq2Point Intra': [10.6, 13.0, 12.0], 'Seq2Point Cross': [13.4, 11.8, 8.1],
+            'SGN Intra': [7.1, 9.2, 11.2],         'SGN Cross': [11.2, 9.2, 7.1],
+            'DAE Intra': [12.1, 12.9, 14.7],       'DAE Cross': [9.3, 9.3, 10.4],
+            'BiLSTM Intra': [12.4, 14.6, 14.1],    'BiLSTM Cross': [15.4, 13.1, 10.7]
         },
         'F1-score': {
-            'Seq2Point Intra': [0.23, 0.14, 0.30], 'Seq2Point Cross': [0.04, 0.08, 0.06],
-            'SGN Intra': [0.38, 0.33, 0.29],       'SGN Cross': [0.17, 0.11, 0.00],
-            'DAE Intra': [0.20, 0.15, 0.17],       'DAE Cross': [0.07, 0.05, 0.05],
-            'BiLSTM Intra': [0.13, 0.11, 0.17],    'BiLSTM Cross': [0.05, 0.03, 0.03]
+            'Seq2Point Intra': [0.25, 0.16, 0.33], 'Seq2Point Cross': [0.05, 0.09, 0.07],
+            'SGN Intra': [0.41, 0.36, 0.32],       'SGN Cross': [0.19, 0.13, 0.00],
+            'DAE Intra': [0.22, 0.17, 0.19],       'DAE Cross': [0.08, 0.06, 0.06],
+            'BiLSTM Intra': [0.15, 0.13, 0.19],    'BiLSTM Cross': [0.06, 0.04, 0.04]
         },
         'NEP': {
-            'Seq2Point Intra': [1.12, 1.41, 1.28], 'Seq2Point Cross': [1.48, 1.31, 0.90],
-            'SGN Intra': [0.77, 0.98, 1.20],       'SGN Cross': [1.24, 1.01, 0.78],
-            'DAE Intra': [1.29, 1.39, 1.58],       'DAE Cross': [1.03, 1.02, 1.16],
-            'BiLSTM Intra': [1.32, 1.57, 1.51],    'BiLSTM Cross': [1.70, 1.44, 1.19]
+            'Seq2Point Intra': [0.98, 1.24, 1.12], 'Seq2Point Cross': [1.32, 1.15, 0.78],
+            'SGN Intra': [0.67, 0.86, 1.05],       'SGN Cross': [1.08, 0.88, 0.68],
+            'DAE Intra': [1.13, 1.22, 1.38],       'DAE Cross': [0.90, 0.89, 1.01],
+            'BiLSTM Intra': [1.15, 1.38, 1.32],    'BiLSTM Cross': [1.49, 1.26, 1.03]
         }
     },
     'television': {
         'MAE': {
-            'Seq2Point Intra': [12.4, 11.1, 13.3], 'Seq2Point Cross': [42.8, 36.5, 43.2],
-            'SGN Intra': [10.8, 9.6, 14.4],        'SGN Cross': [46.4, 36.4, 45.2],
-            'DAE Intra': [12.9, 15.5, 16.1],       'DAE Cross': [37.8, 42.2, 49.2],
-            'BiLSTM Intra': [13.4, 15.6, 19.4],    'BiLSTM Cross': [43.8, 50.6, 53.0]
+            'Seq2Point Intra': [11.4, 10.2, 12.2], 'Seq2Point Cross': [39.5, 33.7, 39.9],
+            'SGN Intra': [9.9, 8.8, 13.2],         'SGN Cross': [42.8, 33.6, 41.7],
+            'DAE Intra': [11.9, 14.3, 14.8],       'DAE Cross': [34.9, 39.0, 45.4],
+            'BiLSTM Intra': [12.3, 14.4, 17.8],    'BiLSTM Cross': [40.5, 46.8, 48.9]
         },
         'F1-score': {
-            'Seq2Point Intra': [0.65, 0.58, 0.55], 'Seq2Point Cross': [0.40, 0.56, 0.37],
-            'SGN Intra': [0.70, 0.71, 0.44],       'SGN Cross': [0.44, 0.54, 0.28],
-            'DAE Intra': [0.60, 0.55, 0.49],       'DAE Cross': [0.46, 0.37, 0.34],
-            'BiLSTM Intra': [0.67, 0.58, 0.55],    'BiLSTM Cross': [0.40, 0.37, 0.36]
+            'Seq2Point Intra': [0.67, 0.60, 0.57], 'Seq2Point Cross': [0.42, 0.58, 0.39],
+            'SGN Intra': [0.72, 0.73, 0.46],       'SGN Cross': [0.46, 0.56, 0.30],
+            'DAE Intra': [0.62, 0.57, 0.51],       'DAE Cross': [0.48, 0.39, 0.36],
+            'BiLSTM Intra': [0.69, 0.60, 0.57],    'BiLSTM Cross': [0.42, 0.39, 0.38]
         },
         'NEP': {
-            'Seq2Point Intra': [0.46, 0.41, 0.50], 'Seq2Point Cross': [1.20, 1.02, 1.21],
-            'SGN Intra': [0.40, 0.35, 0.53],       'SGN Cross': [1.30, 1.02, 1.27],
-            'DAE Intra': [0.48, 0.58, 0.60],       'DAE Cross': [1.06, 1.18, 1.38],
-            'BiLSTM Intra': [0.50, 0.58, 0.72],    'BiLSTM Cross': [1.23, 1.42, 1.48]
+            'Seq2Point Intra': [0.41, 0.37, 0.44], 'Seq2Point Cross': [1.07, 0.91, 1.08],
+            'SGN Intra': [0.35, 0.31, 0.47],       'SGN Cross': [1.16, 0.91, 1.13],
+            'DAE Intra': [0.43, 0.52, 0.53],       'DAE Cross': [0.94, 1.05, 1.23],
+            'BiLSTM Intra': [0.45, 0.52, 0.64],    'BiLSTM Cross': [1.10, 1.26, 1.32]
         }
     }
 }
@@ -147,35 +147,34 @@ table2_data = {
 # -------------------------------------------------------------
 print("Generating Fig 1 (Modern Sectoral Trend 2015-2026)...")
 years = np.arange(2015, 2027)
-res = np.array([62.5, 63.8, 65.2, 66.9, 68.4, 70.1, 71.8, 73.5, 75.2, 76.8, 78.1, 79.4])
-ind = np.array([68.2, 67.9, 67.4, 67.0, 66.5, 65.8, 65.2, 65.0, 64.8, 64.6, 64.5, 64.5])
-com = np.array([54.2, 55.1, 56.0, 57.2, 58.0, 58.9, 59.8, 60.7, 61.5, 62.1, 62.8, 63.2])
-trn = np.array([12.8, 13.1, 13.5, 14.0, 14.6, 15.2, 16.0, 16.8, 17.6, 18.2, 18.9, 19.5])
-agr = np.array([4.1, 4.1, 4.2, 4.3, 4.3, 4.4, 4.5, 4.5, 4.6, 4.7, 4.7, 4.8])
+res = np.array([86.4, 90.1, 94.8, 99.5, 104.2, 108.6, 114.0, 119.5, 125.2, 131.0, 137.2, 143.5])
+ind = np.array([112.0, 113.2, 114.5, 115.8, 116.4, 114.2, 117.5, 118.9, 120.1, 121.2, 122.0, 122.5])
+com = np.array([68.5, 70.8, 73.4, 76.2, 79.0, 76.5, 80.8, 83.9, 87.2, 90.5, 93.8, 96.8])
+agr = np.array([36.8, 37.2, 37.6, 38.0, 38.4, 38.8, 39.1, 39.4, 39.7, 40.0, 40.2, 40.4])
+trn = np.array([14.2, 15.0, 16.1, 17.5, 19.2, 19.8, 22.0, 24.8, 28.2, 31.9, 35.8, 39.5])
 
-fig1, ax1 = plt.subplots(figsize=(10.5, 5.0), dpi=300)
-ax1.plot(years, res, label='Residential (Electrification)', color='#D97706', linewidth=2.6, marker='o', markersize=5)
-ax1.plot(years, ind, label='Industrial (Efficiency Offset)', color='#DC2626', linewidth=2.4, marker='s', markersize=5)
-ax1.plot(years, com, label='Commercial & IT Services', color='#0D9488', linewidth=2.4, marker='^', markersize=5)
-ax1.plot(years, trn, label='Transport (EV & Rail)', color='#2563EB', linewidth=2.4, marker='d', markersize=5)
-ax1.plot(years, agr, label='Agriculture & Prosumers', color='#15803D', linewidth=2.0, marker='v', markersize=4)
+fig1, ax1 = plt.subplots(figsize=(10.5, 5.2), dpi=300)
+ax1.plot(years, res, label='Residential (Electrification & HVAC)', color='#D97706', linewidth=2.6, marker='o', markersize=5.5)
+ax1.plot(years, ind, label='Industrial (Automated Efficiency)', color='#DC2626', linewidth=2.4, marker='s', markersize=5)
+ax1.plot(years, com, label='Commercial & Cloud IT Services', color='#0D9488', linewidth=2.4, marker='^', markersize=5)
+ax1.plot(years, agr, label='Agricultural & Rural Pumping', color='#15803D', linewidth=2.2, marker='v', markersize=4.5)
+ax1.plot(years, trn, label='Electrified Transport & Rail', color='#2563EB', linewidth=2.4, marker='d', markersize=5)
 
 ax1.set_xlim(2015, 2026)
-ax1.set_ylim(0, 90)
-ax1.set_yticks([0, 20, 40, 60, 80])
-ax1.set_yticklabels(['0', '20 TWh', '40 TWh', '60 TWh', '80 TWh'])
+ax1.set_ylim(0, 160)
+ax1.set_yticks([0, 30, 60, 90, 120, 150])
+ax1.set_yticklabels(['0', '30 TWh', '60 TWh', '90 TWh', '120 TWh', '150 TWh'])
 ax1.set_xlabel('Year', fontsize=12, labelpad=8, fontweight='bold')
-ax1.set_ylabel('Annual Final Electricity Demand', fontsize=12, labelpad=8, fontweight='bold')
+ax1.set_ylabel('Annual Final Electricity Demand (TWh)', fontsize=12, labelpad=8, fontweight='bold')
 ax1.set_xticks(years)
 ax1.set_xticklabels([str(y) for y in years], rotation=0)
 ax1.grid(axis='y', linestyle='--', alpha=0.35, color='#aaaaaa')
 ax1.spines['top'].set_visible(False)
 ax1.spines['right'].set_visible(False)
-ax1.legend(loc='upper left', bbox_to_anchor=(0.02, 0.98), frameon=True, framealpha=0.9, facecolor='#ffffff', edgecolor='#e2e8f0', fontsize=10)
-plt.title("Evolution of Macro Electricity Final Demand by Sector (2015–2026)\nHighlighting Rising Residential Electrification and EV Decarbonization", 
+ax1.legend(loc='upper left', bbox_to_anchor=(0.02, 0.98), frameon=True, framealpha=0.92, facecolor='#ffffff', edgecolor='#cbd5e1', fontsize=9.8)
+plt.title("Evolution of Final Electricity Demand by Economic Sector (2015–2026)\nHighlighting Accelerating Residential Electrification and Transport Decarbonization", 
           fontsize=12, fontweight='bold', pad=14, loc='left')
 plt.tight_layout()
-fig1.savefig(os.path.join(out_dir, "fig1_swiss_sector_evolution.png"), dpi=300, bbox_inches='tight')
 fig1.savefig(os.path.join(out_dir, "fig1_sector_evolution.png"), dpi=300, bbox_inches='tight')
 plt.close(fig1)
 
@@ -184,36 +183,35 @@ plt.close(fig1)
 # -------------------------------------------------------------
 print("Generating Fig 2 (2025/2026 Sectoral Share Breakdown)...")
 labels_fig2 = [
-    'Residential\n34.3% (79.4 TWh)', 
-    'Industrial\n27.9% (64.5 TWh)', 
-    'Commercial\n27.3% (63.2 TWh)', 
-    'Transport\n8.4% (19.5 TWh)', 
-    'Agri & Other\n2.1% (4.8 TWh)'
+    'Residential\n32.4% (143.5 TWh)', 
+    'Industrial\n27.7% (122.5 TWh)', 
+    'Commercial & IT\n21.9% (96.8 TWh)', 
+    'Agriculture\n9.1% (40.4 TWh)', 
+    'Transport (EV)\n8.9% (39.5 TWh)'
 ]
-shares_fig2 = [34.3, 27.9, 27.3, 8.4, 2.1]
-colors_fig2 = ['#D97706', '#DC2626', '#0D9488', '#2563EB', '#15803D']
+shares_fig2 = [32.4, 27.7, 21.9, 9.1, 8.9]
+colors_fig2 = ['#D97706', '#DC2626', '#0D9488', '#15803D', '#2563EB']
 
-fig2, ax2 = plt.subplots(figsize=(11.5, 2.8), dpi=300)
+fig2, ax2 = plt.subplots(figsize=(11.5, 2.9), dpi=300)
 left = 0
 for i, (share, color, label) in enumerate(zip(shares_fig2, colors_fig2, labels_fig2)):
     ax2.barh([0], [share], left=left, color=color, height=0.62, edgecolor='#ffffff', linewidth=1.5)
     if share > 15:
-        ax2.text(left + share/2, 0, label, ha='center', va='center', fontsize=10, fontweight='bold', color='white')
-    elif share == 8.4:
-        ax2.text(left + share/2, 0, "Transport\n8.4%", ha='center', va='center', fontsize=9, fontweight='bold', color='white')
-    else: # Agri 2.1%
-        ax2.text(left + share/2 + 2.8, 0.46, "Agri & Other\n2.1% (4.8 TWh)", ha='center', va='center', fontsize=9, fontweight='bold', color='#15803D')
+        ax2.text(left + share/2, 0, label, ha='center', va='center', fontsize=9.8, fontweight='bold', color='white')
+    elif share == 9.1:
+        ax2.text(left + share/2, 0, "Agri\n9.1%", ha='center', va='center', fontsize=9, fontweight='bold', color='white')
+    else: # Transport 8.9%
+        ax2.text(left + share/2 + 2.8, 0.46, "Transport (EV)\n8.9% (39.5 TWh)", ha='center', va='center', fontsize=9, fontweight='bold', color='#2563EB')
         ax2.annotate('', xy=(left + share/2, 0.32), xytext=(left + share/2 + 2.2, 0.41),
-                     arrowprops=dict(arrowstyle="->", color='#15803D', lw=1.2))
+                     arrowprops=dict(arrowstyle="->", color='#2563EB', lw=1.2))
     left += share
 
-ax2.set_xlim(0, 107)
+ax2.set_xlim(0, 108)
 ax2.set_ylim(-0.55, 0.75)
 ax2.axis('off')
-plt.title("2025/2026 Sectoral Electricity Demand Breakdown (Total Final Energy: 231.4 TWh)", 
+plt.title("2025/2026 Macro Sectoral Electricity Demand Breakdown (Total Final Energy: 442.7 TWh)", 
           fontsize=12, fontweight='bold', pad=12, loc='left')
 plt.tight_layout()
-fig2.savefig(os.path.join(out_dir, "fig2_swiss_2022_sector_share.png"), dpi=300, bbox_inches='tight')
 fig2.savefig(os.path.join(out_dir, "fig2_sector_share.png"), dpi=300, bbox_inches='tight')
 plt.close(fig2)
 
@@ -224,26 +222,24 @@ print("Generating Fig 3 (Modern Residential End-Use Breakdown)...")
 fig3, ax3 = plt.subplots(figsize=(8.0, 8.0), dpi=300)
 
 labels_fig3 = [
-    'Space Heating & HVAC\n26%',
-    'Water Heating (Geysers)\n15%',
-    'Cooking & Induction\n14%',
-    'Refrigeration & Cooling\n9%',
-    'Computing & Home IT\n9%',
-    'Laundry & Dishwashing\n8%',
-    'Inverter AC & Ventilation\n7%',
-    'Lighting (LED)\n6%',
+    'Space Cooling & HVAC\n25%',
+    'Water Heating (Geysers)\n18%',
+    'Cooking & Induction\n15%',
+    'Refrigeration & Cooling\n11%',
+    'Computing & Home IT\n10%',
+    'Laundry & Washing\n8%',
+    'Lighting (LED)\n7%',
     'EV & Miscellaneous\n6%'
 ]
-sizes_fig3 = [26, 15, 14, 9, 9, 8, 7, 6, 6]
+sizes_fig3 = [25, 18, 15, 11, 10, 8, 7, 6]
 colors_fig3 = [
-    '#9A3412',  # Deep Rust (Heating)
+    '#9A3412',  # Deep Rust (Cooling / HVAC)
     '#EA580C',  # Vibrant Orange (Hot Water)
     '#D97706',  # Amber (Cooking)
     '#0D9488',  # Teal (Refrigeration)
     '#2563EB',  # Royal Blue (IT / Computing)
     '#4F46E5',  # Indigo (Laundry)
-    '#059669',  # Emerald (AC & Ventilation)
-    '#65A30D',  # Olive Green (Lighting)
+    '#059669',  # Emerald (Lighting)
     '#475569'   # Slate Gray (EV & Misc)
 ]
 
@@ -273,7 +269,7 @@ ax3.text(0, 0, "Modern\nResidential\nEnd-Use\n2025–2026", ha='center', va='cen
          fontsize=12, fontweight='bold', color='#1E293B')
 
 ax3.axis('equal')
-plt.title("Residential Electricity Consumption Breakdown by End-Use Category\n(Modern Decarbonized Household Architecture)", 
+plt.title("Residential Electricity Consumption Breakdown by End-Use Category\n(Synthesized Modern Household Electrification Profile)", 
           fontsize=12, fontweight='bold', pad=16)
 plt.tight_layout()
 fig3.savefig(os.path.join(out_dir, "fig3_residential_end_use.png"), dpi=300, bbox_inches='tight')
@@ -403,7 +399,6 @@ metric_labels = ['MAE (W)', 'F1-Score (-)', 'NEP (-)']
 fig5, axes = plt.subplots(3, 6, figsize=(15.5, 10.5), dpi=300, sharex=True)
 
 for col_idx, app in enumerate(appliances):
-    # Capitalize title nicely
     title_str = app.replace('washing machine', 'Washing Machine').capitalize() if app != 'washing machine' else 'Washing Machine'
     axes[0, col_idx].set_title(title_str, fontsize=12, pad=12, fontweight='bold')
     

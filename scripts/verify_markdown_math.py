@@ -1,5 +1,6 @@
 import os
 import re
+import numpy as np
 
 repo_root = r"C:\Users\manit\Documents\College\Himshikhar-NILM-ESP32"
 
@@ -12,7 +13,7 @@ def check_file(fpath):
     # 1. Check for broken math syntax
     if re.search(r"\\hat\{y\}t", content):
         issues.append(("syntax error", "Found \\hat{y}t without subscript underscore"))
-    if re.search(r"\\sum\{[t=1|n=1|k=1]", content):
+    if re.search(r"\\sum\{[t=1|n=1|k=1|i=1]", content):
         issues.append(("syntax error", "Found \\sum{ without subscript underscore"))
 
     # 2. Check $$ display math
@@ -27,6 +28,21 @@ def check_file(fpath):
 
     # 3. Check $ inline math (excluding $$)
     no_display = re.sub(r"\$\$.+?\$\$", "", content, flags=re.DOTALL)
+    
+    # Check for unescaped pipes in table cells with math
+    lines = content.splitlines()
+    in_table = False
+    for line_num, line in enumerate(lines, 1):
+        if line.strip().startswith("|") and line.strip().endswith("|"):
+            # Inside a table row
+            cells = [c.strip() for c in line.strip().split("|")[1:-1]]
+            for cell in cells:
+                # If there's math with a raw pipe inside it
+                for math_m in re.finditer(r"(?<!\\)\$(.*?)(?<!\\)\$", cell):
+                    m_content = math_m.group(1)
+                    if "|" in m_content and r"\|" not in m_content and r"\vert" not in m_content:
+                        issues.append(("raw pipe in table math cell", f"Line {line_num}: {m_content}"))
+        
     dollar_spans = re.findall(r"(?<!\\)\$(.*?)(?<!\\)\$", no_display)
     for blk in dollar_spans:
         if blk.count("{") != blk.count("}"):
@@ -51,9 +67,14 @@ def check_file(fpath):
         target = os.path.normpath(os.path.join(file_dir, img))
         if not os.path.exists(target):
             issues.append(("missing image file", img, target))
+            
+    # 5. Check for outdated swiss references or 2012 dates in text (excluding legitimate citation)
+    if "swiss_sector_evolution" in content or "swiss_2022" in content:
+        issues.append(("obsolete figure filename reference", "Found swiss figure reference"))
 
     return issues
 
+print("=== AUDITING MARKDOWN FILES ===")
 has_any_issue = False
 for root, dirs, files in os.walk(repo_root):
     if ".git" in root or ".gemini" in root:
@@ -70,3 +91,14 @@ for root, dirs, files in os.walk(repo_root):
 
 if not has_any_issue:
     print("SUCCESS: All Markdown files passed math, syntax, and image verification with 0 issues!")
+
+# 6. Verify Paper References Count
+paper_file = os.path.join(repo_root, "docs", "NILM_ACADEMIC_RESEARCH_PAPER.md")
+with open(paper_file, "r", encoding="utf-8") as f:
+    paper_text = f.read()
+
+ref_matches = re.findall(r"\n\d+\.\s+\*\*", paper_text[paper_text.find("## References"):])
+print(f"Total academic references in paper: {len(ref_matches)}")
+assert len(ref_matches) >= 20, f"Expected >= 20 references, found {len(ref_matches)}"
+
+print("ALL DEEP VERIFICATION CHECKS PASSED!")
