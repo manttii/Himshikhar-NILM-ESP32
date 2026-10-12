@@ -64,14 +64,23 @@ def fix_img_src(match):
 
 html_body = re.sub(r'<img src="(.*?)"', fix_img_src, html_body)
 
-# Wrap wide tables and key figures with full-width container
-wide_elements = ["Table 1:", "Table 2:", "Table 2A:", "Table 3:", "Table 4:", "Table 5:", "Table 7A:", "Table 7B:",
-                 "Figure 4:", "Figure 5:", "Figure 10:"]
+# Wrap tables with appropriate container
+# Wide tables spanning both columns: Table 1, Table 2, Table 7A, Table 7B
+# Normal tables staying in column: Table 2A, Table 3, Table 4, Table 5, Table 6
+def wrap_tables(match):
+    heading = match.group(1)
+    table_html = match.group(2)
+    is_wide = any(t in heading for t in ["Table 1:", "Table 2:", "Table 7A:", "Table 7B:"])
+    cls_name = "full-width" if is_wide else "normal-block"
+    return f'<div class="{cls_name}">{heading}\n{table_html}</div>'
 
-for elem in wide_elements:
-    html_body = html_body.replace(f"<h4>{elem}", f'<div class="full-width"><h4>{elem}')
+html_body = re.sub(r'(<h4>Table\s+[^<]+</h4>)\s*(<table>.*?</table>)', wrap_tables, html_body, flags=re.DOTALL)
 
-html_body = re.sub(r"(</table>)", r"\1</div>", html_body)
+# Wrap wide multi-panel figure 5 in full-width
+def wrap_wide_figures(match):
+    return f'<div class="full-width">{match.group(0)}</div>'
+
+html_body = re.sub(r'(<p><img[^>]+fig5_multi_panel[^>]+>.*?(?:<em>.*?</em>)?</p>)', wrap_wide_figures, html_body, flags=re.DOTALL)
 
 css_styles = """
 @page {
@@ -109,10 +118,17 @@ body {
     text-justify: inter-word;
 }
 
-/* Full-width elements within columns */
+/* Full-width elements spanning both columns */
 .full-width {
     column-span: all;
-    margin: 12px 0;
+    margin: 8px 0;
+    break-inside: auto;
+}
+
+/* Normal column blocks */
+.normal-block {
+    margin: 6px 0;
+    break-inside: avoid;
 }
 
 h1 {
@@ -191,15 +207,15 @@ em {
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 7.2pt;
-    margin: 8px 0 12px 0;
+    font-size: 6.8pt;
+    margin: 6px 0 10px 0;
     line-height: 1.15;
 }
 
 table th, table td {
     border-top: 0.5px solid #bbb;
     border-bottom: 0.5px solid #bbb;
-    padding: 3px 4px;
+    padding: 2.5px 2px;
     text-align: center;
 }
 
